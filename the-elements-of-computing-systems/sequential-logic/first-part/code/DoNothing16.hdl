@@ -1,0 +1,12 @@
+/* Do Nothing 16 bit version :(
+ */
+
+ CHIP DoNothing16 {
+  IN in[16];
+  OUT out[16];
+
+  PARTS:
+  Not16(in=in, out=notin);
+  Not16(in=notin, out=out);
+
+ }
