@@ -1,0 +1,12 @@
+/*
+ * Check the most significant bit
+ * (Used to see if the number is negative)
+ */
+
+CHIP CheckSignificant {
+  IN in[16];
+  OUT out;
+
+  PARTS:
+  DoNothing(in=in[15], out=out);
+}

@@ -1,0 +1,15 @@
+/* The language won't let me connect output
+ * pins to intermediate,
+ * so I have to make
+ * another chip which does
+ * nothing :O
+ */
+
+CHIP DoNothing {
+  IN in;
+  OUT out;
+
+  PARTS:
+  Not(in=in, out=notin);
+  Not(in=notin, out=out);
+}
