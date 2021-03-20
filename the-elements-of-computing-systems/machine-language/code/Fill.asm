@@ -13,20 +13,16 @@
 
 // Put your code here.
 
-// Idea:
+// Removed unnecessary initialization
+// Another way to optimize this is by making a single block - DRAWPIXEL
+// But this would require 2 more conditions, to set the register D to,
+// meaning that not keeping on DRY is better.
 
-// You know, when you are sleepy, you just git commit without optimizing :D
-// (Use a color register, reuse restartcounter...)
 
 // Set the top-leftmost address to register 1
 // In this program, R1 is used as a pixel counter
 
-@SCREEN
-D=A
-@R1
-M=D - 1
-    
-@LOOP
+@RESTARTCOUNTER
 0;JMP
 
 (DRAWWHITE)
@@ -43,7 +39,7 @@ M=D - 1
   D=0
   @R1
   A=M
-  M=!D
+  M=!Di
 
   @LOOP
   0;JMP
@@ -53,7 +49,7 @@ M=D - 1
   @SCREEN
   D=A
   @R1
-  M=D
+  M=D-1
 
 (LOOP)
   // Check if screen is fully used
