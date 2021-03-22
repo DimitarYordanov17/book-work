@@ -1,0 +1,11 @@
+/* Three-way or
+ */
+
+ CHIP OR3 {
+  IN values[3];
+  OUT out;
+
+  PARTS:
+  Or(a=values[0], b=values[1], out=imediate);
+  Or(a=imediate, b=values[2], out=out);
+ }

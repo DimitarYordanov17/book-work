@@ -1,0 +1,14 @@
+/* The language won't let me assign values
+ * to "variables", so I have to make
+ * another chip which does
+ * nothing :O
+ */
+
+CHIP DoNothing16 {
+  IN in[16];
+  OUT out[16];
+
+  PARTS:
+  Not16(in=in, out=notin);
+  Not16(in=notin, out=out);
+}

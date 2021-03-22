@@ -1,0 +1,9 @@
+/* A constant 0xFFFF value emitter
+ */
+
+CHIP ConstantOne {
+  OUT out[16];
+
+  PARTS:
+  DoNothing16(in[0..15]=true, out=out);
+ }
