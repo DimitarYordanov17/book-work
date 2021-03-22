@@ -1,0 +1,44 @@
+/* A unit that signals
+ * if a branch should
+ * be taken, depending on
+ * its type and ALU output
+ */
+
+ CHIP BCU {
+    IN J[3], zr, ng;
+    OUT out;
+
+    PARTS:
+    OR3(values=J, out=passvalue);
+    DMux8Way(in=passvalue, sel=J, a=con1, b=con2, c=con3, d=con4, e=con5, f=con6, g=con7, h=con8);
+
+    /* several AND gates follow which are dependant on two things: if this is the right jump and if the eventual jump is satisfied */
+    
+    Not(in=zr, out=notzr);
+    Not(in=ng, out=notng);
+    
+    
+    /* Jump type: 001, B */
+    And(a=notzr, b=notng, out=bcondition);
+    And(a=bcondition, b=con2, out=takeb);
+
+    /* Jump type: 010, C */
+    And(a=zr, b=con3, out=takec);
+
+    /* Jump type: 011, D */
+    Or(a=zr, b=notng, out=dcondition);
+    And(a=dcondition, b=con4, out=taked);
+    
+    /* Jump type: 100, E */
+    And(a=ng, b=con5, out=takee);
+
+    /* Jump type: 101, F */
+    And(a=notzr, b=con6, out=takef);
+
+    /* Jump type: 110, G */
+    Or(a=zr, b=ng, out=gcondition);
+    And(a=gcondition, b=con7, out=takeg);
+
+    /* Jump type, 000 and 111 have discrete values */
+    Or8Way(in[0]=con1, in[1]=takeb, in[2]=takec, in[3]=taked, in[4]=takee, in[5]=takef, in[6]=takeg, in[7]=con8, out=out);
+ }
