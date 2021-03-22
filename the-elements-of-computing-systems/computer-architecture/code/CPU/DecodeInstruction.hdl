@@ -1,0 +1,34 @@
+/* Decode a HACK machine
+ * language instruction
+ * to its important parts
+ */
+
+ CHIP DecodeInstruction {
+  IN instruction[16];
+  OUT A, C[6], D[3], J[3], T;
+
+  PARTS:
+    /* T is the type of instruction, either A or C */
+    DoNothing(in=instruction[15], out=T);
+
+    /* C is the computation that must be done from the ALU */
+    DoNothing(in=instruction[11], out=C[5]);
+    DoNothing(in=instruction[10], out=C[4]);
+    DoNothing(in=instruction[9], out=C[3]);
+    DoNothing(in=instruction[8], out=C[2]);
+    DoNothing(in=instruction[7], out=C[1]);
+    DoNothing(in=instruction[6], out=C[0]);
+
+    /* D is the destination, where the computation should be saved*/
+    DoNothing(in=instruction[5], out=D[2]);
+    DoNothing(in=instruction[4], out=D[1]);
+    DoNothing(in=instruction[3], out=D[0]);
+    
+    /* J is the jump type*/
+    DoNothing(in=instruction[2], out=J[2]);
+    DoNothing(in=instruction[1], out=J[1]);
+    DoNothing(in=instruction[0], out=J[0]);
+
+    /* A is if we should load register M or A*/
+    DoNothing(in=instruction[12], out=a);
+ }
