@@ -6,6 +6,8 @@
 # 2. Parser
 # 3. Code translator
 
+
+
 class Assembler:
   '''
   Main class, with no need of initialization, which offers an assemble functionality, to convert .asm to .hack files
@@ -16,4 +18,5 @@ class Assembler:
     Make use of class methods to reach the goal
     '''
     return 0
+  
 
