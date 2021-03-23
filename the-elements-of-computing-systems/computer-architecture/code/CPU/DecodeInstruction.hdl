@@ -30,5 +30,5 @@
     DoNothing(in=instruction[0], out=J[0]);
 
     /* A is if we should load register M or A*/
-    DoNothing(in=instruction[12], out=a);
+    DoNothing(in=instruction[12], out=A);
  }
