@@ -1,0 +1,10 @@
+/* Decode 6 to 6 */
+
+CHIP Decode6 {
+  IN values[6];
+  OUT a, b, c, d, e, f;
+
+  PARTS:
+  Decode3(values=values[0..2], a=a, b=b, c=c);
+  Decode3(values=values[3..5], a=d, b=e, c=f);
+}

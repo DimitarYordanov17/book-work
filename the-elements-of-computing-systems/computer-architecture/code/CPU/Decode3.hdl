@@ -1,0 +1,13 @@
+/* Again, the language won't let me program like a normal programmer, so I have to do stupid shit
+ * like making additional chips...
+ */
+
+ CHIP Decode3 {
+    IN values[3];
+    OUT a, b, c;
+
+    PARTS:
+    DoNothing(in=values[0], out=a);
+    DoNothing(in=values[1], out=b);
+    DoNothing(in=values[2], out=c);
+ }
