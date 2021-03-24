@@ -71,7 +71,26 @@ class Assembler:
             if address_request == "VARIABLE":
               symbolic_table[address] = 16 + variables
               variables += 1
-            
+      
+      f.seek(0)
+        
+      for line in lines:
+        if line[0] == "@" and not line[1:].strip().isnumeric():
+          address = line[1:].strip()
+
+          if address in symbolic_table.keys():
+            bytecode = symbolic_table[address]
+          else:
+            bytecode = AssemblerLibrary.get_register(address)
+          
+          f.write("@" + str(bytecode) + "\n")
+        elif line[0] != "(":
+          f.write(line)
+
+
+      f.truncate()
+
+
     print(symbolic_table)
 
   def clean(file_asm):
