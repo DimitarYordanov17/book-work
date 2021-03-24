@@ -1,54 +1,47 @@
 # A Python assembler for the Hack machine language. @DimitarYordanov17
-# The whole idea is to make one main Assembler class, which implement the following functionalities, in order to sucessfully translate .asm (Hack assembly) to .hack (Hack machine code) programs
-# 0. Remove unnecesary whitespaces and comments
-# 1. Symbolic preprocessor
-#   1.1. Jump preprocessor
-#   1.2. Variables preprocessor
-# 2. Code translator
 
-from libAssembler import AssemblerLibrary
+from assembler-lib import AssemblerLibrary
 import os
 import sys
 
 class Assembler:
   '''
-  Main class, with no need of initialization, which offers an assemble functionality, to convert .asm to .hack files
+  Main assembler class, several functions available, note that the input file should first be cleaned, symbolically preprocessed and finally translated
   '''
 
   def assemble(path: str):
     '''
-    Make use of class methods to translate a file
+    Clean, apply symbolic preprocessing and translate a file
     '''
     
-    intermediate_asm_name = "program_intermediate.asm"
-    output_asm_name = path.split('.')[0] + ".hack"
-    os.system(f"cp {path} {intermediate_asm_name}")
+    intermediate_file = "program_intermediate.asm"
+    os.system(f"cp {path} {intermediate_file}")
 
-    Assembler.clean(intermediate_asm_name)
+    output_file = path.split('.')[0] + ".hack"
 
-    Assembler.symbolic_preprocessor(intermediate_asm_name)
+    Assembler.clean(intermediate_file)
+
+    Assembler.symbolic_preprocessor(intermediate_file)
     
-    Assembler.translate(intermediate_asm_name, output_asm_name)
+    Assembler.translate(intermediate_file, output_file)
 
-    os.system(f"rm {intermediate_asm_name}")
+    os.system(f"rm {intermediate_file}")
 
-  def symbolic_preprocessor(file_asm):
+  def symbolic_preprocessor(input_file):
     '''
-    1. Construct a jump and variables  symbolic table
+    1. Construct a jump and variables symbolic table
     2. Translate via the symbolic table
     '''
     symbolic_table = dict()
     variables = 0
 
-    with open(file_asm, "r+") as f:
+    with open(input_file, "r+") as f:
       lines = f.readlines()
       
       # Build jump symbolic table part
       for index, line in enumerate(lines):
         if line[0] == "(":
           symbolic_table[line[1:-2]] = index - len(symbolic_table.keys())
-      
-
 
       # Build registers symbolic table part
       for line in lines:
@@ -57,6 +50,7 @@ class Assembler:
 
           if (not address.isnumeric()) and (address not in symbolic_table.keys()):
             address_request = AssemblerLibrary.get_register(address)
+
             if address_request == "VARIABLE":
               symbolic_table[address] = 16 + variables
               variables += 1
@@ -73,17 +67,18 @@ class Assembler:
             bytecode = AssemblerLibrary.get_register(address)
           
           f.write("@" + str(bytecode) + "\n")
+
         elif line[0] != "(":
           f.write(line)
 
-
       f.truncate()
 
-  def clean(file_asm):
+  def clean(input_file):
     '''
     Remove unnecesary whitespaces and comments
     '''
-    with open(file_asm, "r+") as f:
+
+    with open(input_file, "r+") as f:
       lines = f.readlines()
       f.seek(0)
       for line in lines:
@@ -104,6 +99,7 @@ class Assembler:
     '''
     Translate a prepared file
     '''
+
     with open(input_file, "r+") as f, open(output_file, 'w') as of:
       lines = f.readlines()
       
