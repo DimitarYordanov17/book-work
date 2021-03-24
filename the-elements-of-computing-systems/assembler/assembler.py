@@ -4,10 +4,11 @@
 # 1. Symbolic preprocessor
 #   1.1. Jump preprocessor
 #   1.2. Variables preprocessor
-# 2. Parser
-# 3. Code translator
+# 2. Code translator
 
 from libAssembler import AssemblerLibrary
+import os
+import sys
 
 class Assembler:
   '''
@@ -18,30 +19,18 @@ class Assembler:
     '''
     Make use of class methods to translate a file
     '''
-    # Get main file
-    program_asm  = open(path, 'r')
-    program_asm_list = program_asm.readlines()
-
-    # Make an intermediate file for the symbolic and cleaner preprocessor
-    intermediate_asm_name = "program_intermediate.asm"
-    intermediate_asm = open("program_intermediate.asm", 'w')
-    intermediate_asm.write(program_asm.read())
     
-    # 0. Use cleaner preprocessor
+    intermediate_asm_name = "program_intermediate.asm"
+    output_asm_name = path.split('.')[0] + ".hack"
+    os.system(f"cp {path} {intermediate_asm_name}")
+
     Assembler.clean(intermediate_asm_name)
 
-    # 1.Apply symbolic preprocessor to the intermediate file
-    Assembler.symbolic_preprocessor(intermediate_asm)
+    Assembler.symbolic_preprocessor(intermediate_asm_name)
     
-    # 2. Parse the intermediate_asm file
-    Assembler.parse(intermediate_asm)
-    
-    # Create a new .hack file which is ready to be parsed from the cleaned and symbolically preprocessed intermediate_asm file
-    program_hack_name = path.split('.')[0] + ".hack"
-    program_hack = open(program_hack_name, 'w')
+    Assembler.translate(intermediate_asm_name, output_asm_name)
 
-    # 3. Translate the well-formated intermediate_asm to machine code
-    Assembler.translate(intermediate_asm, pogram_hack)
+    os.system(f"rm {intermediate_asm_name}")
 
   def symbolic_preprocessor(file_asm):
     '''
@@ -90,9 +79,6 @@ class Assembler:
 
       f.truncate()
 
-
-    print(symbolic_table)
-
   def clean(file_asm):
     '''
     Remove unnecesary whitespaces and comments
@@ -114,17 +100,44 @@ class Assembler:
               
       f.truncate()
 
-  def parse(file_asm):
+  def translate(input_file, output_file):
     '''
-    Prepare the file for the code translator - decode the instructions
+    Translate a prepared file
     '''
-    return 0
+    with open(input_file, "r+") as f, open(output_file, 'w') as of:
+      lines = f.readlines()
+      
+      of.seek(0)
+      
+      for line in lines:
+        line = line.strip()
+         
+        instruction_type = '0' if "@" in line else '1'
 
-  def translate(file_asm):
-    '''
-    Translate a prepared file into Hack machine code
-    '''
-    return 0
+        if instruction_type == '0':
+          address = line[1:]
+          binary_code = f"{int(address):015b}"
+          machine_code = instruction_type + binary_code
 
-Assembler.clean("Fill_test.asm")
-Assembler.symbolic_preprocessor("Fill_test.asm")
+        else:
+          if "=" in line:
+            splitted_instruction = line.split('=')
+            destination = splitted_instruction[0]
+            computation = splitted_instruction[1]
+            jump = ""
+          else:
+            splitted_instruction = line.split(';')
+            computation = splitted_instruction[0]
+            jump = splitted_instruction[1]
+            destination = ""
+
+          machine_code_destination = AssemblerLibrary.get_destination(destination)
+          machine_code_jump = AssemblerLibrary.get_jump(jump)
+          machine_code_computation = AssemblerLibrary.get_computation(computation)
+
+          machine_code = instruction_type + "11" + machine_code_computation + machine_code_destination + machine_code_jump 
+        
+        of.write(machine_code + '\n')
+
+input_file = sys.argv[1]
+Assembler.assemble(input_file)
