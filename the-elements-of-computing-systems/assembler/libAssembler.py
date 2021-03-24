@@ -76,7 +76,7 @@ class AssemblerLibrary:
 
     return bytecode[computation]
 
-  def get_registers(register):
+  def get_register(register):
     '''
     Return bytecode of built-in registers
     '''
@@ -90,7 +90,7 @@ class AssemblerLibrary:
       'KBD'   : 0x6000,
     }
     
-    if register in ['R' + n for n in range(0, 16)]:
+    if register in ['R' + str(n) for n in range(0, 16)]:
       if len(register) == 2:
         return int(register[1])
       
