@@ -1,4 +1,5 @@
 # A Python assembler for the Hack machine language. @DimitarYordanov17
+# To run: python3 assembler.py {your .asm file}
 
 from assembler-lib import AssemblerLibrary
 import os
