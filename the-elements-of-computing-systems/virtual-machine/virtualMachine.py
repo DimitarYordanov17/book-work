@@ -11,7 +11,7 @@
 # add instruction, so this file can stay clean (easier to scale later).
 # I will implement the memory and stack arithmetic operations and later on - program flow and functions
 
-from virtual-machine-library.py import 
+from virtualMachineLibrary.py import VirtualMachineLibrary
 
 class VirtualMachineTranslator:
   """
@@ -34,7 +34,7 @@ class VirtualMachineTranslator:
     # clean
     # translate (parse)
     # truncate and continue
-
+    return 0
 
   def parse_file(input_file_name):
     output_file_name = input_file_name.split(".")[0] + ".asm"
@@ -60,10 +60,10 @@ class VirtualMachineTranslator:
 
         elif len(decoded_instruction) == 2: # Program flow
           # not implemented in v1
-
+          bytecode_instruction = []
         else: # Function calling
           # not implemented in v1
-
+          bytecode_instruction = []
         
         output_file.write(f"// {line}")
         for instruction in bytecode_instruction:
