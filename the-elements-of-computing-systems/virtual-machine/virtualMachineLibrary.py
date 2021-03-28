@@ -156,26 +156,3 @@ class VirtualMachineLibrary:
     Not implemented in v1
     '''
     return 0
-
-instruction1 = VirtualMachineLibrary.get_arithmetic("add")
-instruction2 = VirtualMachineLibrary.get_arithmetic("sub")
-instruction3 = VirtualMachineLibrary.get_arithmetic("and")
-instruction4 = VirtualMachineLibrary.get_arithmetic("eq")
-instruction5 = VirtualMachineLibrary.get_arithmetic("neg")
-
-
-print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ADD")
-[print(line) for line in instruction1]
-
-print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SUB")
-[print(line) for line in instruction2]
-
-print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ AND")
-[print(line) for line in instruction3]
-
-print("~~~~~~~~~~~~~~~~~~~~~~~~~~ EQ")
-[print(line) for line in instruction4]
-
-print("~~~~~~~~~~~~~~~~~~~~~~~~~~~ NEG")
-[print(line) for line in instruction5]
-
