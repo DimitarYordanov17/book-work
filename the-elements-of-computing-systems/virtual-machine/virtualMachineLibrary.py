@@ -45,7 +45,7 @@ class VirtualMachineLibrary:
     '''
     direct_arithmetic_commands = {"add" : '+', "sub": '-', "and": '&', "or": '|'}
     conditional_arithmetic_commands = {"eq" : 'JEQ', "gt": 'JGT', "lt": 'JLT'} # I can just preppend 'J' to the type and .upper(), because they match, but the symmetry would be ruined
-    unary_commands = ["neg", "not"] # Both are !y
+    unary_commands = ["neg", "not"]
 
     final_bytecode = []
 
@@ -79,8 +79,11 @@ class VirtualMachineLibrary:
       final_bytecode.extend(VirtualMachineLibrary._get_primary("sp--")) # sp--
 
       final_bytecode.extend(["@SP", "A=M", "D=M"]) # D=*sp
-
-      final_bytecode.extend(["@SP", "A=M", "M=!D"]) # *sp = !D
+        
+      if instruction == "not":
+        final_bytecode.extend(["@SP", "A=M", "M=!D"]) # *sp = !D
+      else:
+        final_bytecode.extend(["@SP", "A=M", "M=-D"])
 
       final_bytecode.extend(VirtualMachineLibrary._get_primary("sp++")) # sp++
 
