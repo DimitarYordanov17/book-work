@@ -43,7 +43,7 @@ class VirtualMachineLibrary:
     or  | x || y
     not | !y
     '''
-    direct_arithmetic_commands = {"add" : '+', "sub": '-', "and": '&&', "or": '||'}
+    direct_arithmetic_commands = {"add" : '+', "sub": '-', "and": '&', "or": '|'}
     conditional_arithmetic_commands = {"eq" : 'JEQ', "gt": 'JGT', "lt": 'JLT'} # I can just preppend 'J' to the type and .upper(), because they match, but the symmetry would be ruined
     unary_commands = ["neg", "not"] # Both are !y
 
