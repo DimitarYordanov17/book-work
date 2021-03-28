@@ -8,7 +8,7 @@ class VirtualMachineLibrary:
 
   def _get_primary(operation, a=None, b=None, treat_b_as_pointer=True):
     '''
-    Define primitive operations, which are going to be main building 'blocks' of higher (arithmetic/memory) instructions
+    Define primary operations, which are going to be main building 'blocks' of higher (arithmetic/memory) instructions
     '''
 
     bytecode_dictionary = {
@@ -33,8 +33,59 @@ class VirtualMachineLibrary:
   def get_arithmetic(instruction):
     '''
     Returns bytecode for arithmetic instructions
+    add | x + y
+    sub | x - y
+    neg | - y
+    eq  | x == y
+    gt  | x > y
+    lt  | y < x
+    and | x && y
+    or  | x || y
+    not | !y
     '''
-    # TODO: Add full commands
+    direct_arithmetic_commands = {"add" : '+', "sub": '-', "and": '&&', "or": '||'}
+    conditional_arithmetic_commands = {"eq" : 'JEQ', "gt": 'JGT', "lt": 'JLT'} # I can just preppend 'J' to the type and .upper(), because they match, but the symmetry would be ruined
+    unary_commands = ["neg", "not"] # Both are !y
+
+    final_bytecode = []
+
+    if instruction in direct_arithmetic_commands:
+      final_bytecode.extend(VirtualMachineLibrary._get_primary("sp--")) # sp--
+      final_bytecode.extend(["@SP", "A=M", "D=M"]) # D=*sp
+
+      final_bytecode.extend(VirtualMachineLibrary._get_primary("sp--")) # sp--
+      final_bytecode.extend(["@SP", "A=M", f"D=M{direct_arithmetic_commands[instruction]}D"]) # D=*sp (operand)  D
+
+      final_bytecode.extend(["@SP", "A=M", "M=D"]) # *sp = D
+      final_bytecode.extend(VirtualMachineLibrary._get_primary("sp++")) # sp++
+      
+    elif instruction in conditional_arithmetic_commands:
+      final_bytecode.extend(VirtualMachineLibrary._get_primary("sp--")) # sp--
+      final_bytecode.extend(["@SP", "A=M", "D=M"]) # D=*sp
+
+      final_bytecode.extend(VirtualMachineLibrary._get_primary("sp--")) # sp--
+      final_bytecode.extend(["@SP", "A=M", "D=M-D"]) # D=*sp -  D
+      
+      final_bytecode.extend(["@WRITEONE", f"D;{conditional_arithmetic_commands[instruction]}"]) # @WRITEONE, jump if the corresponding condition matches with D's (x-y) value
+
+      final_bytecode.extend(["(WRITEZERO)", "@SP", "A=M", "M=0"]) # (WRITEZERO) block, *sp=0 (false)
+      final_bytecode.extend(["@INCREMENT", "0;JMP"]) # Jump instantly to sp++ part, skipping write -1
+      
+      final_bytecode.extend(["(WRITENONE)", "@SP", "A=M", "M=-1"]) # (WRITENONE) block, *sp=-1 (true)
+
+      final_bytecode.extend(["(INCREMENT)"]) # Start (INCREMENT) block
+      final_bytecode.extend(VirtualMachineLibrary._get_primary("sp++")) # sp++
+
+    else: # unary command
+      final_bytecode.extend(VirtualMachineLibrary._get_primary("sp--")) # sp--
+
+      final_bytecode.extend(["@SP", "A=M", "D=M"]) # D=*sp
+
+      final_bytecode.extend(["@SP", "A=M", "M=!D"]) # *sp = !D
+
+      final_bytecode.extend(VirtualMachineLibrary._get_primary("sp++")) # sp++
+
+    return final_bytecode
 
   def get_memory(instruction):
     '''
@@ -105,3 +156,26 @@ class VirtualMachineLibrary:
     Not implemented in v1
     '''
     return 0
+
+instruction1 = VirtualMachineLibrary.get_arithmetic("add")
+instruction2 = VirtualMachineLibrary.get_arithmetic("sub")
+instruction3 = VirtualMachineLibrary.get_arithmetic("and")
+instruction4 = VirtualMachineLibrary.get_arithmetic("eq")
+instruction5 = VirtualMachineLibrary.get_arithmetic("neg")
+
+
+print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ADD")
+[print(line) for line in instruction1]
+
+print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SUB")
+[print(line) for line in instruction2]
+
+print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ AND")
+[print(line) for line in instruction3]
+
+print("~~~~~~~~~~~~~~~~~~~~~~~~~~ EQ")
+[print(line) for line in instruction4]
+
+print("~~~~~~~~~~~~~~~~~~~~~~~~~~~ NEG")
+[print(line) for line in instruction5]
+
