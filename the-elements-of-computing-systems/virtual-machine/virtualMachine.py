@@ -11,7 +11,9 @@
 # add instruction, so this file can stay clean (easier to scale later).
 # I will implement the memory and stack arithmetic operations and later on - program flow and functions
 
-from virtualMachineLibrary.py import VirtualMachineLibrary
+from virtualMachineLibrary import VirtualMachineLibrary
+import os
+import sys
 
 class VirtualMachineTranslator:
   """
@@ -26,45 +28,41 @@ class VirtualMachineTranslator:
   1.5. Write to file
   """
 
-  def translate(path):
-    #files = getfilesname
-    #files should be either a file or a list of file names, depending if the path is a dir
-
-    # for every vile in files
-    # clean
-    # translate (parse)
-    # truncate and continue
-    return 0
-
-  def parse_file(input_file_name):
+  def translate(input_file_name): 
     output_file_name = input_file_name.split(".")[0] + ".asm"
+    os.system(f"cp {input_file_name} {output_file_name}")
+    VirtualMachineTranslator.clean(output_file_name)
+    VirtualMachineTranslator.parse_file(output_file_name)
 
-    with open(input_file_name, 'r') as input_file, open(output_file_name, 'w') as output_file:
-      instructions = input_file.readlines()
+  def parse_file(output_file_name):
+    with open(output_file_name, 'r+') as output_file:
+      instructions = output_file.readlines()
       output_file.seek(0)
 
       for line in instructions:
+        print(line)
         instruction_structure = line.split()
         instruction = instruction_structure[0]
         
+        bytecode_instruction = []
+
         if len(instruction_structure) == 1 and instruction != "return": # Stack arithmetic
           bytecode_instruction = VirtualMachineLibrary.get_arithmetic(instruction)
 
         elif instruction in ['pop', 'push']: # Memory access
-          bytecode_instruction = VirtualMachineLibrary.get_memory(*instruction_structure)
-
-        elif len(decoded_instruction) == 2: # Program flow
+          bytecode_instruction = VirtualMachineLibrary.get_memory(line)
+          
+        elif len(instruction_structure) == 2: # Program flow
           # not implemented in v1
-          bytecode_instruction = []
+          pass
         else: # Function calling
           # not implemented in v1
-          bytecode_instruction = []
+          pass
         
         output_file.write(f"// {line}")
         for instruction in bytecode_instruction:
-          output_file.write(instruction)
+          output_file.write(instruction + '\n')
 
-      input_file.truncate()
       output_file.truncate()
 
     # input file is an .vm format, we should make a new .asm file
@@ -90,6 +88,6 @@ class VirtualMachineTranslator:
               f.write(line_elements[0].rstrip() + '\n')
           else:
             f.write(line)
-    f.truncate()
+      f.truncate()
 
-
+VirtualMachineTranslator.translate(sys.argv[1])
