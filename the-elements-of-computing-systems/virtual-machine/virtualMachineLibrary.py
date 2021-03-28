@@ -66,7 +66,7 @@ class VirtualMachineLibrary:
       final_bytecode.extend(VirtualMachineLibrary._get_primary("sp--")) # sp--
       final_bytecode.extend(["@SP", "A=M", "D=M-D"]) # D=*sp -  D
       
-      final_bytecode.extend(["@WRITEONE", f"D;{conditional_arithmetic_commands[instruction]}"]) # @WRITEONE, jump if the corresponding condition matches with D's (x-y) value
+      final_bytecode.extend(["@WRITENONE", f"D;{conditional_arithmetic_commands[instruction]}"]) # @WRITENONE, jump if the corresponding condition matches with D's (x-y) value
 
       final_bytecode.extend(["(WRITEZERO)", "@SP", "A=M", "M=0"]) # (WRITEZERO) block, *sp=0 (false)
       final_bytecode.extend(["@INCREMENT", "0;JMP"]) # Jump instantly to sp++ part, skipping write -1
