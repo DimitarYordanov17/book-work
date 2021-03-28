@@ -36,6 +36,7 @@ class VirtualMachineTranslator:
 
   def parse_file(output_file_name):
     with open(output_file_name, 'r+') as output_file:
+      total_instructions = 0
       instructions = output_file.readlines()
       output_file.seek(0)
 
@@ -46,7 +47,7 @@ class VirtualMachineTranslator:
         bytecode_instruction = []
 
         if len(instruction_structure) == 1 and instruction != "return": # Stack arithmetic
-          bytecode_instruction = VirtualMachineLibrary.get_arithmetic(instruction)
+          bytecode_instruction = VirtualMachineLibrary.get_arithmetic(instruction, total_instructions)
 
         elif instruction in ['pop', 'push']: # Memory access
           bytecode_instruction = VirtualMachineLibrary.get_memory(line)
@@ -60,6 +61,7 @@ class VirtualMachineTranslator:
         
         output_file.write(f"// {line}")
         for instruction in bytecode_instruction:
+          total_instructions += 1
           output_file.write(instruction + '\n')
 
       output_file.truncate()

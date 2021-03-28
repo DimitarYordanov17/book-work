@@ -30,7 +30,7 @@ class VirtualMachineLibrary:
     else:
       return bytecode_dictionary[operation]
 
-  def get_arithmetic(instruction):
+  def get_arithmetic(instruction, total_instructions):
     '''
     Returns bytecode for arithmetic instructions
     add | x + y
@@ -66,14 +66,13 @@ class VirtualMachineLibrary:
       final_bytecode.extend(VirtualMachineLibrary._get_primary("sp--")) # sp--
       final_bytecode.extend(["@SP", "A=M", "D=M-D"]) # D=*sp -  D
       
-      final_bytecode.extend(["@WRITENONE", f"D;{conditional_arithmetic_commands[instruction]}"]) # @WRITENONE, jump if the corresponding condition matches with D's (x-y) value
+      final_bytecode.extend([f"@{total_instructions + 17}", f"D;{conditional_arithmetic_commands[instruction]}"]) # @WRITENONE, jump if the corresponding condition matches with D's (x-y) value
 
-      final_bytecode.extend(["(WRITEZERO)", "@SP", "A=M", "M=0"]) # (WRITEZERO) block, *sp=0 (false)
-      final_bytecode.extend(["@INCREMENT", "0;JMP"]) # Jump instantly to sp++ part, skipping write -1
+      final_bytecode.extend(["@SP", "A=M", "M=0"]) # (WRITEZERO) block, *sp=0 (false)
+      final_bytecode.extend([f"@{total_instructions + 20}", "0;JMP"]) # Jump instantly to sp++ part, skipping write -1
       
-      final_bytecode.extend(["(WRITENONE)", "@SP", "A=M", "M=-1"]) # (WRITENONE) block, *sp=-1 (true)
+      final_bytecode.extend(["@SP", "A=M", "M=-1"]) # (WRITENONE) block, *sp=-1 (true)
 
-      final_bytecode.extend(["(INCREMENT)"]) # Start (INCREMENT) block
       final_bytecode.extend(VirtualMachineLibrary._get_primary("sp++")) # sp++
 
     else: # unary command
