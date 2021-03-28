@@ -48,15 +48,10 @@ class VirtualMachineTranslator:
         instruction = instruction_structure[0]
         
         if len(instruction_structure) == 1 and instruction != "return": # Stack arithmetic
-          bytecode_instruction = get_arithmetic(instruction)
+          bytecode_instruction = VirtualMachineLibrary.get_arithmetic(instruction)
 
         elif instruction in ['pop', 'push']: # Memory access
-          segment, index = instruction_structure[1], instruction_structure[2]
-          bytecode_address = get_address_calculation(segment, index)
-          bytecode_instruction_only = get_memory(instruction)
-          
-          # or vice-versa
-          bytecode_instruction = bytecode_address.extend(bytecode_instruction_only)
+          bytecode_instruction = VirtualMachineLibrary.get_memory(*instruction_structure)
 
         elif len(decoded_instruction) == 2: # Program flow
           # not implemented in v1
