@@ -40,7 +40,6 @@ class VirtualMachineTranslator:
       output_file.seek(0)
 
       for line in instructions:
-        print(line)
         instruction_structure = line.split()
         instruction = instruction_structure[0]
         
