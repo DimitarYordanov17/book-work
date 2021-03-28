@@ -89,7 +89,7 @@ class VirtualMachineLibrary:
 
     return final_bytecode
 
-  def get_memory(instruction):
+  def get_memory(instruction, file_name):
     '''
     Returns the full memory access bytecode, which consists of:
     1. Loading address calculation in R13
@@ -102,7 +102,7 @@ class VirtualMachineLibrary:
     segment = instruction_structure[1]
     index = instruction_structure[2]
     
-    calculated_address_bytecode = VirtualMachineLibrary._get_address_calculation(segment, index)
+    calculated_address_bytecode = VirtualMachineLibrary._get_address_calculation(segment, index, file_name)
 
     if instruction_type == "push":
       treat_b_as_pointer = segment != "constant" # If we don't have a constant segment, then b (R13 in this case) must be treated as a pointer
@@ -118,13 +118,31 @@ class VirtualMachineLibrary:
 
       return calculated_address_bytecode + decrement_sp + save_stack_into_R13
 
-  def _get_address_calculation(segment, index):
+  def _get_address_calculation(segment, index, file_name):
     '''
     Returns bytecode that loads address calculation (segment base address + index) in R13 
     '''
+    
+    print(segment, index, file_name)
 
-    if segment == "constant":
+    if segment == "constant": # Temp starts at 5
       load_bytecode = [f"@{index}", "D=A"]
+
+    elif segment == "temp":
+      load_bytecode = [f"@{index + 5}", "D=A"]
+
+    elif segment == "static":
+      variable_name = file_name + "." + index
+      load_bytecode = [f"@{variable_name}", "D=A"]
+
+    elif segment == "pointer":
+      if index == '0':
+        register = "THIS"
+      else:
+        register = "THAT"
+
+      load_bytecode = [f"@{register}", "D=A"]
+
     else:
       load_bytecode = [f"@{VirtualMachineLibrary._get_symbolic_symbol(segment)}", "D=M", f"@{index}", "D=D+A"]
     
@@ -140,7 +158,7 @@ class VirtualMachineLibrary:
       "argument":    'ARG',
       "this"    :    'THIS',
       "that"    :    'THAT',
-    }
+      }
 
     try: 
       return bytecode_dictionary[segment]

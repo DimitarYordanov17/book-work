@@ -50,7 +50,7 @@ class VirtualMachineTranslator:
           bytecode_instruction = VirtualMachineLibrary.get_arithmetic(instruction, total_instructions)
 
         elif instruction in ['pop', 'push']: # Memory access
-          bytecode_instruction = VirtualMachineLibrary.get_memory(line)
+          bytecode_instruction = VirtualMachineLibrary.get_memory(line, output_file_name.split('.')[0])
           
         elif len(instruction_structure) == 2: # Program flow
           # not implemented in v1
