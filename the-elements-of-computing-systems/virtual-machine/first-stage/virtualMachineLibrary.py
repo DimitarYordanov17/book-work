@@ -2,14 +2,14 @@
 # (This is a first-stage library - only memory access and stack arithmetic instructions)
 
 class VirtualMachineLibrary:
-  '''
+  """
   Main class to map the Virtual Machine intermediate language to Hack machine language 
-  '''
+  """
 
   def _get_primary(operation, a=None, b=None, treat_b_as_pointer=True):
-    '''
+    """
     Define primary operations, which are going to be main building 'blocks' of higher (arithmetic/memory) instructions
-    '''
+    """
 
     bytecode_dictionary = {
       "sp++": ["@SP", "M=M+1"],
@@ -31,7 +31,7 @@ class VirtualMachineLibrary:
       return bytecode_dictionary[operation]
 
   def get_arithmetic(instruction, total_instructions):
-    '''
+    """
     Returns bytecode for arithmetic instructions
     add | x + y
     sub | x - y
@@ -42,7 +42,7 @@ class VirtualMachineLibrary:
     and | x && y
     or  | x || y
     not | !y
-    '''
+    """
     direct_arithmetic_commands = {"add" : '+', "sub": '-', "and": '&', "or": '|'}
     conditional_arithmetic_commands = {"eq" : 'JEQ', "gt": 'JGT', "lt": 'JLT'} # I can just preppend 'J' to the type and .upper(), because they match, but the symmetry would be ruined
     unary_commands = ["neg", "not"]
@@ -90,12 +90,12 @@ class VirtualMachineLibrary:
     return final_bytecode
 
   def get_memory(instruction, file_name):
-    '''
+    """
     Returns the full memory access bytecode, which consists of:
     1. Loading address calculation in R13
     2. Decrementing SP, if pop else saving R13's content into current SP available location
     3. Saveing SP value in R13, if pop else incrementing SP
-    '''
+    """
 
     instruction_structure = instruction.split()
     instruction_type = instruction_structure[0]
@@ -119,11 +119,9 @@ class VirtualMachineLibrary:
       return calculated_address_bytecode + decrement_sp + save_stack_into_R13
 
   def _get_address_calculation(segment, index, file_name):
-    '''
+    """
     Returns bytecode that loads address calculation (segment base address + index) in R13 
-    '''
-    
-    print(segment, index, file_name)
+    """ 
 
     if segment == "constant": # Temp starts at 5
       load_bytecode = [f"@{index}", "D=A"]
@@ -150,9 +148,9 @@ class VirtualMachineLibrary:
     return full_address_bytecode
 
   def _get_symbolic_symbol(segment):
-    '''
+    """
     Returns Hack symbolic symbol equivalents
-    '''
+    """
     bytecode_dictionary = {
       "local"   :    'LCL',
       "argument":    'ARG',
@@ -166,13 +164,13 @@ class VirtualMachineLibrary:
       return segment
    
   def get_function(instruction):
-    '''
+    """
     Not implemented in first-stage
-    '''
+    """
     return 0
 
   def get_flow(instruction):
-    '''
+    """
     Not implemented in first-stage
-    '''
+    """
     return 0
