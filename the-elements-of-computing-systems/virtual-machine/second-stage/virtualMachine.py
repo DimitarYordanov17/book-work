@@ -44,6 +44,7 @@ class VirtualMachineTranslator:
 
         with open(input_file_name, 'r+') as input_file:
             total_instructions = 0
+            function_stack = ["Main"]
             instructions = input_file.readlines()
             input_file.seek(0)
 
@@ -61,9 +62,14 @@ class VirtualMachineTranslator:
 
                 elif len(instruction_structure) == 2:  # Program flow
                     label = instruction_structure[1]
-                    bytecode_instruction = VirtualMachineLibrary.get_program_flow(instruction, label)
+                    bytecode_instruction = VirtualMachineLibrary.get_program_flow(instruction, label, function_stack[-1])
 
                 else:  # Function calling
+                    if instruction == "function":
+                        function_stack.append(instruction_structure[1])
+                    elif instruction == "return":
+                        function_stack.pop()
+                        
                     bytecode_instruction = VirtualMachineLibrary.get_function(instruction_structure, total_instructions, input_file_name.split('.')[0])
 
                 input_file.write(f"// {line}")

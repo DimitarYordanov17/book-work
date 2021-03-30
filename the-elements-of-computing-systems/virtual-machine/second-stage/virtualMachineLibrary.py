@@ -171,7 +171,7 @@ class VirtualMachineLibrary:
         except:  # If the segment is not available, it means that it is most likely a variable, so just return it
             return segment
 
-    def get_program_flow(instruction, label):
+    def get_program_flow(instruction, label, function_block):
         """
         Returns full program flow instruction bytecode
         1. goto label
@@ -180,7 +180,7 @@ class VirtualMachineLibrary:
         """
 
         if instruction == "label":  # Set a label
-            bytecode = [f"({label})"]
+            bytecode = [f"({function_block}${label})"]
         elif instruction == "goto": # Unconditional jumping
             bytecode = [f"@{label}", "0;JMP"]
         else: # Conditional jumping
@@ -191,7 +191,7 @@ class VirtualMachineLibrary:
             bytecode.extend(["@SP", "A=M", "D=M"])
 
             # Jump if D is not 0
-            bytecode.extend([f"@{label}", "D;JNE"])
+            bytecode.extend([f"@{function_block}${label}", "D;JNE"])
 
         return bytecode
 
