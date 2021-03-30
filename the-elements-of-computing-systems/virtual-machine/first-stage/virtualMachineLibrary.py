@@ -94,7 +94,7 @@ class VirtualMachineLibrary:
     Returns the full memory access bytecode, which consists of:
     1. Loading address calculation in R13
     2. Decrementing SP, if pop else saving R13's content into current SP available location
-    3. Saveing SP value in R13, if pop else incrementing SP
+    3. Saving SP value in R13, if pop else incrementing SP
     """
 
     instruction_structure = instruction.split()
