@@ -1,9 +1,9 @@
 # A bytecode library for the VM code > Hack machine language translation. @DimitarYordanov17
-
+# (This is a first-stage library - only memory access and stack arithmetic instructions)
 
 class VirtualMachineLibrary:
   '''
-  Main class to map the Virtual Machine intermediate language to Hack machine language
+  Main class to map the Virtual Machine intermediate language to Hack machine language 
   '''
 
   def _get_primary(operation, a=None, b=None, treat_b_as_pointer=True):
@@ -167,12 +167,12 @@ class VirtualMachineLibrary:
    
   def get_function(instruction):
     '''
-    Not implemented in v1
+    Not implemented in first-stage
     '''
     return 0
 
   def get_flow(instruction):
     '''
-    Not implemented in v1
+    Not implemented in first-stage
     '''
     return 0
