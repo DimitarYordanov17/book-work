@@ -60,9 +60,9 @@ class VirtualMachineTranslator:
       output_file.truncate()
     
   def clean(input_file):
-    '''
+    """
     Remove unnecesary whitespaces and comments
-    '''
+    """
 
     with open(input_file, "r+") as f:
       lines = f.readlines()
