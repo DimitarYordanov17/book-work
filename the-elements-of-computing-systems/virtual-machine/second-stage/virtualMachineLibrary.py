@@ -6,7 +6,7 @@ class VirtualMachineLibrary:
     Main class to map the Virtual Machine intermediate language to Hack machine language
     """
 
-    def _get_primary(operation, a=None, b=None, treat_b_as_pointer=True):
+    def _get_primary(operation, a=None, b=None, treat_a_as_pointer=True, treat_b_as_pointer=True):
         """
         Define primary operations, which are going to be main building 'blocks' of higher (arithmetic/memory) instructions
         """
@@ -22,7 +22,11 @@ class VirtualMachineLibrary:
             if treat_b_as_pointer:
                 load_b_into_d.insert(1, "A=M")
 
-            load_d_into_a = [f"@{a}", "A=M", "M=D"]
+            load_d_into_a = [f"@{a}", "M=D"]
+
+            if treat_a_as_pointer:
+                load_d_into_a.insert(1, "A=M")
+
             load_b_into_a = load_b_into_d + load_d_into_a
 
             return load_b_into_a
@@ -44,8 +48,7 @@ class VirtualMachineLibrary:
         not | !y
         """
         direct_arithmetic_commands = {"add": '+', "sub": '-', "and": '&', "or": '|'}
-        conditional_arithmetic_commands = {"eq": 'JEQ', "gt": 'JGT',
-                                           "lt": 'JLT'}  # I can just preppend 'J' to the type and .upper(), because they match, but the symmetry would be ruined
+        conditional_arithmetic_commands = {"eq": 'JEQ', "gt": 'JGT', "lt": 'JLT'}  # I can just preppend 'J' to the type and .upper(), because they match, but the symmetry would be ruined
         unary_commands = ["neg", "not"]
 
         final_bytecode = []
@@ -98,7 +101,7 @@ class VirtualMachineLibrary:
         Returns the full memory access bytecode, which consists of:
         1. Loading address calculation in R13
         2. Decrementing SP, if pop else saving R13's content into current SP available location
-        3. Saveing SP value in R13, if pop else incrementing SP
+        3. Saving SP value in R13, if pop else incrementing SP
         """
 
         instruction_structure = instruction.split()
@@ -168,14 +171,29 @@ class VirtualMachineLibrary:
         except:  # If the segment is not available, it means that it is most likely a variable, so just return it
             return segment
 
-    def get_function(instruction):
+    def get_program_flow(instruction, label):
         """
-        Not implemented in v1
+        Returns full program flow instruction bytecode
+        1. goto label
+        2. label
+        3. if-goto label
         """
-        return 0
 
-    def get_flow(instruction):
-        """
-        Not implemented in v1
-        """
-        return 0
+        if instruction == "label":  # Set a label
+            bytecode = [f"({label})"]
+        elif instruction == "goto": # Unconditional jumping
+            bytecode = [f"@{label}", "0;JMP"]
+        else: # Conditional jumping
+            bytecode = []
+
+            # Pop into D
+            bytecode.extend(VirtualMachineLibrary._get_primary("sp--"))
+            bytecode.extend(["@SP", "A=M", "D=M"])
+
+            # Jump if D is not 0
+            bytecode.extend([f"@{label}", "D;JNE"])
+
+        return bytecode
+
+    def get_function(instruction_structure):
+        return 0 
