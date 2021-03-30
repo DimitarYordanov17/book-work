@@ -26,7 +26,6 @@ class VirtualMachineTranslator:
         else:  # We have a directory
             vm_files = []
             
-
             for root, dirs, files in os.walk(path):
 
                 for file_name in files:
@@ -61,11 +60,11 @@ class VirtualMachineTranslator:
                     bytecode_instruction = VirtualMachineLibrary.get_memory(line, input_file_name.split('.')[0])
 
                 elif len(instruction_structure) == 2:  # Program flow
-                    # not implemented in first-stage
-                    pass
+                    label = instruction_structure[1]
+                    bytecode_instruction = VirtualMachineLibrary.get_program_flow(instruction, label)
+
                 else:  # Function calling
-                    # not implemented in first-stage
-                    pass
+                    bytecode_instruction = VirtualMachineLibrary,get_function(instruction_structure)
 
                 input_file.write(f"// {line}")
 
