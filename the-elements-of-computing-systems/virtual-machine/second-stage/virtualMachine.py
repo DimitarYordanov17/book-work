@@ -12,12 +12,12 @@ class VirtualMachineTranslator:
     Main class, capable of processing a full directory, with .vm files, resulting in one .asm file
     """
 
-    def translate_files(path):
+    def translate_path(path):
         """
         Translate all .vm files in path
         """
 
-        if '.' in path:  # We have a file
+        if '.' in path and path != '.':  # We have a file
             output_file_name = path.split(".")[0] + ".asm"
             os.system(f"cp {path} {output_file_name}")
             VirtualMachineTranslator.clean(output_file_name)
@@ -25,6 +25,7 @@ class VirtualMachineTranslator:
 
         else:  # We have a directory
             vm_files = []
+            
 
             for root, dirs, files in os.walk(path):
 
@@ -33,10 +34,9 @@ class VirtualMachineTranslator:
 
                     if file_extension == 'vm':
                         vm_files.append(file_name)
-
-            # Try recursion?
+            
             for vm_file in vm_files:
-                VirtualMachineTranslator.translate(vm_file)
+                VirtualMachineTranslator.translate_path(vm_file)
 
     def parse_file(input_file_name):
         """
@@ -94,4 +94,4 @@ class VirtualMachineTranslator:
             f.truncate()
 
 
-VirtualMachineTranslator.translate_files(sys.argv[1])
+VirtualMachineTranslator.translate_path(sys.argv[1])
