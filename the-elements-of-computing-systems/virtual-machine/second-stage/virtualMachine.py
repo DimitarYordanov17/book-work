@@ -64,7 +64,7 @@ class VirtualMachineTranslator:
                     bytecode_instruction = VirtualMachineLibrary.get_program_flow(instruction, label)
 
                 else:  # Function calling
-                    bytecode_instruction = VirtualMachineLibrary,get_function(instruction_structure)
+                    bytecode_instruction = VirtualMachineLibrary.get_function(instruction_structure, total_instructions, input_file_name.split('.')[0])
 
                 input_file.write(f"// {line}")
 

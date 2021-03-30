@@ -195,5 +195,72 @@ class VirtualMachineLibrary:
 
         return bytecode
 
-    def get_function(instruction_structure):
-        return 0 
+    def get_function(instruction_structure, total_instructions, file_name):
+        """
+        Returns full function instruction bytecode
+        function function_name lVars
+        call function_name nArgs
+        return
+        """
+        state = ["LCL", "ARG", "THIS", "THAT"]
+        instruction = instruction_structure[0]
+
+        if instruction == "function":
+            function_name = instruction_structure[1]
+            vars_count = int(instruction_structure[2])
+            
+            bytecode = []
+            
+            # Start a function block
+            bytecode.extend([f"({function_name})"])
+
+            for _ in range(vars_count):
+              bytecode.extend(VirtualMachineLibrary.get_memory("push constant 0", file_name)) 
+
+        elif instruction == "call": 
+            function_name = instruction_structure[1]
+            args_count = (instruction_structure[2])
+            
+            bytecode = []
+
+            # Save state
+            for address in state:
+                bytecode.extend(VirtualMachineLibrary.get_memory(f"push {address}", file_name))
+
+            # Set ARG to point to new base address (sp - 5 - args_count)
+            bytecode.extend(["@SP", "D=M", "@5", "D=D-A", f"@{args_count}", "D=D-A", "@ARG", "M=D"])
+            
+            # Set LCL to point to current SP
+            bytecode.extend(["@SP", "D=M", "@LCL", "M=D"])
+            
+            # Jump to function_name
+            bytecode.extend([f"@{function_name}", "0;JMP"])
+
+            total_updated_instructions = total_instruction + len(bytecode)
+            push_return_value = VirtualMachineLibrary.get_memory(f"push constant {total_updated_instructions + 1}", file_name)
+
+            bytecode = push_return_value + bytecode
+        else:
+            bytecode = []
+
+            # Set R13 to point to callee's LCL
+            bytecode.extend(["@LCL", "D=M", "@R13", "M=D"])
+
+            # Set R14 to return address
+            bytecode.extend(["@R13", "D=M", "@5", "D=D-A", "@R14", "M=D"])
+
+            # Set first callee's argument to be return value
+            bytecode.extend(VirtualMachineLibrary._get_primary("sp--"))
+            bytecode.extend(VirtualMachineLibrary._get_primary("*a=*b", a="ARG", b="SP"))
+
+            # Reposition SP to be after first callee's argument
+            bytecode.extend(["@ARG", "D=M+1", "@SP", "M=D"])
+            
+            # Restore registers
+            for index, address in enumerate(reversed(state)):
+                bytecode.extend(["@R13", "D=M", f"@{index + 1}", "D=D-A", "A=D", "D=M", f"@{address}", "M=D"])
+            
+            # Return jump
+            bytecode.extend(["@R14", "A=M", "A=M", "0;JMP"])
+        
+        return bytecode
