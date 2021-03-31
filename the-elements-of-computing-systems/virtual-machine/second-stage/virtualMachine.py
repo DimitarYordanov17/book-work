@@ -1,4 +1,5 @@
 # A virtual machine translator. Intermediate code (supplied by a to be implemented compiler) -> Hack machine language. @DimitarYordanov7
+
 # To run: python3 virtualMachine.py {your .vm file}
 # (This file is the second stage translator, capable of processing a whole directory and handling functional and conditional instructions)
 
@@ -11,31 +12,15 @@ class VirtualMachineTranslator:
     """
     Main class, capable of processing a full directory, with .vm files, resulting in one .asm file
     """
-
-    def translate_path(path):
+    def translate_file(input_file_name):
         """
-        Translate all .vm files in path
+        Fully translate a file
         """
 
-        if '.' in path and path != '.':  # We have a file
-            output_file_name = path.split(".")[0] + ".asm"
-            os.system(f"cp {path} {output_file_name}")
-            VirtualMachineTranslator.clean(output_file_name)
-            VirtualMachineTranslator.parse_file(output_file_name)
-
-        else:  # We have a directory
-            vm_files = []
-            
-            for root, dirs, files in os.walk(path):
-
-                for file_name in files:
-                    file_extension = file_name.split('.')[1]
-
-                    if file_extension == 'vm':
-                        vm_files.append(file_name)
-            
-            for vm_file in vm_files:
-                VirtualMachineTranslator.translate_path(vm_file)
+        output_file_name = "out.asm"
+        os.system(f"cp {input_file_name} {output_file_name}")
+        VirtualMachineTranslator.clean(output_file_name)
+        VirtualMachineTranslator.parse_file(output_file_name) 
 
     def parse_file(input_file_name):
         """
@@ -53,7 +38,7 @@ class VirtualMachineTranslator:
                 instruction = instruction_structure[0]
 
                 bytecode_instruction = []
-
+                
                 if len(instruction_structure) == 1 and instruction != "return":  # Stack arithmetic
                     bytecode_instruction = VirtualMachineLibrary.get_arithmetic(instruction, total_instructions)
 
@@ -99,4 +84,4 @@ class VirtualMachineTranslator:
             f.truncate()
 
 
-VirtualMachineTranslator.translate_path(sys.argv[1])
+VirtualMachineTranslator.translate_file(sys.argv[1])

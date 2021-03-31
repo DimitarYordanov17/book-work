@@ -107,7 +107,9 @@ class VirtualMachineLibrary:
         instruction_structure = instruction.split()
         instruction_type = instruction_structure[0]
         segment = instruction_structure[1]
+       
         index = instruction_structure[2]
+       
 
         calculated_address_bytecode = VirtualMachineLibrary._get_address_calculation(segment, index, file_name)
 
@@ -135,7 +137,7 @@ class VirtualMachineLibrary:
             load_bytecode = [f"@{index}", "D=A"]
 
         elif segment == "temp":
-            load_bytecode = [f"@{index + 5}", "D=A"]
+            load_bytecode = [f"@{int(index) + 5}", "D=A"]
 
         elif segment == "static":
             variable_name = file_name + "." + index
@@ -225,19 +227,25 @@ class VirtualMachineLibrary:
 
             # Save state
             for address in state:
-                bytecode.extend(VirtualMachineLibrary.get_memory(f"push {address}", file_name))
+                bytecode.extend(["@LCL", "D=M", "@R13", "M=D"])
+                bytecode.extend(VirtualMachineLibrary._get_primary("*a=*b", a="SP", b="R13", treat_b_as_pointer=False))
+                bytecode.extend(VirtualMachineLibrary._get_primary("sp++"))
 
             # Set ARG to point to new base address (sp - 5 - args_count)
             bytecode.extend(["@SP", "D=M", "@5", "D=D-A", f"@{args_count}", "D=D-A", "@ARG", "M=D"])
             
+              
+
             # Set LCL to point to current SP
             bytecode.extend(["@SP", "D=M", "@LCL", "M=D"])
             
             # Jump to function_name
             bytecode.extend([f"@{function_name}", "0;JMP"])
-
-            total_updated_instructions = total_instruction + len(bytecode)
-            push_return_value = VirtualMachineLibrary.get_memory(f"push constant {total_updated_instructions + 1}", file_name)
+            
+            total_updated_instructions = total_instructions + len(bytecode) + 12 # 12 is the length of push_return_value later insertion
+            push_return_value = VirtualMachineLibrary.get_memory(f"push constant {total_updated_instructions}", file_name)
+            
+            print(len(push_return_value), push_return_value)
 
             bytecode = push_return_value + bytecode
         else:
@@ -258,7 +266,7 @@ class VirtualMachineLibrary:
             
             # Restore registers
             for index, address in enumerate(reversed(state)):
-                bytecode.extend(["@R13", "D=M", f"@{index + 1}", "D=D-A", "A=D", "D=M", f"@{address}", "M=D"])
+                bytecode.extend(["@R13", "D=M", f"@{int(index) + 1}", "D=D-A", "A=D", "D=M", f"@{address}", "M=D"])
             
             # Return jump
             bytecode.extend(["@R14", "A=M", "A=M", "0;JMP"])
