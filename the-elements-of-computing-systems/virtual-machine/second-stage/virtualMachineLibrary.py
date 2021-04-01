@@ -1,5 +1,4 @@
 # A bytecode library for the VM code > Hack machine language translation. @DimitarYordanov17
-# (This is the second-stage library)
 
 class VirtualMachineLibrary:
     """
@@ -8,7 +7,7 @@ class VirtualMachineLibrary:
 
     def _get_primary(operation, a=None, b=None, treat_a_as_pointer=True, treat_b_as_pointer=True):
         """
-        Define primary operations, which are going to be main building 'blocks' of higher (arithmetic/memory) instructions
+        Define primary operations, which are going to be main building "blocks" of higher instructions
         """
 
         bytecode_dictionary = {
@@ -34,7 +33,7 @@ class VirtualMachineLibrary:
         else:
             return bytecode_dictionary[operation]
 
-    def get_arithmetic(instruction, total_instructions):
+    def get_arithmetic(instruction, function_block, file_name, total_instructions):
         """
         Returns bytecode for arithmetic instructions
         add | x + y
@@ -47,8 +46,9 @@ class VirtualMachineLibrary:
         or  | x || y
         not | !y
         """
-        direct_arithmetic_commands = {"add": '+', "sub": '-', "and": '&', "or": '|'}
-        conditional_arithmetic_commands = {"eq": 'JEQ', "gt": 'JGT', "lt": 'JLT'}  # I can just preppend 'J' to the type and .upper(), because they match, but the symmetry would be ruined
+
+        direct_arithmetic_commands = {"add": "+", "sub": "-", "and": "&", "or": "|"}
+        conditional_arithmetic_commands = {"eq": "JEQ", "gt": "JGT", "lt": "JLT"}  # I can just preppend "J" to the type and .upper(), because they match, but the symmetry would be ruined
         unary_commands = ["neg", "not"]
 
         final_bytecode = []
@@ -71,15 +71,19 @@ class VirtualMachineLibrary:
             final_bytecode.extend(VirtualMachineLibrary._get_primary("sp--"))  # sp--
             final_bytecode.extend(["@SP", "A=M", "D=M-D"])  # D=*sp -  D
 
-            final_bytecode.extend([f"@{total_instructions + 17}",
-                                   f"D;{conditional_arithmetic_commands[instruction]}"])  # @WRITENONE, jump if the corresponding condition matches with D's (x-y) value
+            write_none_label = ":".join([file_name, function_block, str(total_instructions + 17), "WRITENONE"])
+            increment_sp_label = ":".join([file_name, function_block, str(total_instructions + 20), "INCREMENTSP"])
+
+            final_bytecode.extend([f"@{write_none_label}",
+                                   f"D;{conditional_arithmetic_commands[instruction]}"])  # @WRITENONE, jump if the corresponding condition matches with D"s (x-y) value
 
             final_bytecode.extend(["@SP", "A=M", "M=0"])  # (WRITEZERO) block, *sp=0 (false)
             final_bytecode.extend(
-                [f"@{total_instructions + 20}", "0;JMP"])  # Jump instantly to sp++ part, skipping write -1
+                [f"@{increment_sp_label}", "0;JMP"])  # Jump instantly to sp++ part, skipping write -1
 
-            final_bytecode.extend(["@SP", "A=M", "M=-1"])  # (WRITENONE) block, *sp=-1 (true)
-
+            final_bytecode.extend([f"({write_none_label})", "@SP", "A=M", "M=-1"])  # (WRITENONE) block, *sp=-1 (true)
+            
+            final_bytecode.extend([f"({increment_sp_label})"])
             final_bytecode.extend(VirtualMachineLibrary._get_primary("sp++"))  # sp++
 
         else:  # unary command
@@ -100,7 +104,7 @@ class VirtualMachineLibrary:
         """
         Returns the full memory access bytecode, which consists of:
         1. Loading address calculation in R13
-        2. Decrementing SP, if pop else saving R13's content into current SP available location
+        2. Decrementing SP, if pop else saving R13"s content into current SP available location
         3. Saving SP value in R13, if pop else incrementing SP
         """
 
@@ -114,7 +118,7 @@ class VirtualMachineLibrary:
         calculated_address_bytecode = VirtualMachineLibrary._get_address_calculation(segment, index, file_name)
 
         if instruction_type == "push":
-            treat_b_as_pointer = segment != "constant"  # If we don't have a constant segment, then b (R13 in this case) must be treated as a pointer
+            treat_b_as_pointer = segment != "constant"  # If we don"t have a constant segment, then b (R13 in this case) must be treated as a pointer
 
             save_R13_into_stack_bytecode = VirtualMachineLibrary._get_primary("*a=*b", a="SP", b="R13",
                                                                               treat_b_as_pointer=treat_b_as_pointer)
@@ -144,7 +148,7 @@ class VirtualMachineLibrary:
             load_bytecode = [f"@{variable_name}", "D=A"]
 
         elif segment == "pointer":
-            if index == '0':
+            if index == "0":
                 register = "THIS"
             else:
                 register = "THAT"
@@ -161,16 +165,17 @@ class VirtualMachineLibrary:
         """
         Returns Hack symbolic symbol equivalents
         """
+
         bytecode_dictionary = {
-            "local": 'LCL',
-            "argument": 'ARG',
-            "this": 'THIS',
-            "that": 'THAT',
+            "local": "LCL",
+            "argument": "ARG",
+            "this": "THIS",
+            "that": "THAT",
         }
 
         try:
             return bytecode_dictionary[segment]
-        except:  # If the segment is not available, it means that it is most likely a variable, so just return it
+        except:  # If the segment is not available, it is most likely a variable, so just return it
             return segment
 
     def get_program_flow(instruction, label, function_block):
@@ -182,7 +187,7 @@ class VirtualMachineLibrary:
         """
 
         if instruction == "label":  # Set a label
-            bytecode = [f"({function_block}${label})"]
+            bytecode = [f"({function_block}{'$' if function_block else ''}{label})"]
         elif instruction == "goto": # Unconditional jumping
             bytecode = [f"@{label}", "0;JMP"]
         else: # Conditional jumping
@@ -193,7 +198,7 @@ class VirtualMachineLibrary:
             bytecode.extend(["@SP", "A=M", "D=M"])
 
             # Jump if D is not 0
-            bytecode.extend([f"@{function_block}${label}", "D;JNE"])
+            bytecode.extend([f"@{function_block}{('$' if function_block else '')}{label}", "D;JNE"])
 
         return bytecode
 
@@ -204,6 +209,7 @@ class VirtualMachineLibrary:
         call function_name nArgs
         return
         """
+
         state = ["LCL", "ARG", "THIS", "THAT"]
         instruction = instruction_structure[0]
 
@@ -217,51 +223,55 @@ class VirtualMachineLibrary:
             bytecode.extend([f"({function_name})"])
 
             for _ in range(vars_count):
-              bytecode.extend(VirtualMachineLibrary.get_memory("push constant 0", file_name)) 
+                bytecode.extend(VirtualMachineLibrary.get_memory("push constant 0", file_name)) 
 
         elif instruction == "call": 
             function_name = instruction_structure[1]
-            args_count = (instruction_structure[2])
+            args_count = instruction_structure[2]
             
             bytecode = []
+            
+            return_label = ":".join([file_name, function_name, str(total_instructions), "RETURN"])
+
+            # Push return address
+            bytecode.extend([f"@{return_label}"])
+            bytecode.extend(["D=A", "@SP", "A=M", "M=D"])
+            bytecode.extend(VirtualMachineLibrary._get_primary("sp++"))
 
             # Save state
             for address in state:
-                bytecode.extend(["@LCL", "D=M", "@R13", "M=D"])
+                bytecode.extend([f"@{address}", "D=M", "@R13", "M=D"])
                 bytecode.extend(VirtualMachineLibrary._get_primary("*a=*b", a="SP", b="R13", treat_b_as_pointer=False))
                 bytecode.extend(VirtualMachineLibrary._get_primary("sp++"))
 
             # Set ARG to point to new base address (sp - 5 - args_count)
             bytecode.extend(["@SP", "D=M", "@5", "D=D-A", f"@{args_count}", "D=D-A", "@ARG", "M=D"])
             
-              
-
             # Set LCL to point to current SP
             bytecode.extend(["@SP", "D=M", "@LCL", "M=D"])
             
             # Jump to function_name
             bytecode.extend([f"@{function_name}", "0;JMP"])
             
-            total_updated_instructions = total_instructions + len(bytecode) + 12 # 12 is the length of push_return_value later insertion
-            push_return_value = VirtualMachineLibrary.get_memory(f"push constant {total_updated_instructions}", file_name)
-            
-            print(len(push_return_value), push_return_value)
+            # Set return label
+            bytecode.extend([f"({return_label})"])
 
-            bytecode = push_return_value + bytecode
+            bytecode = bytecode
+
         else:
             bytecode = []
 
-            # Set R13 to point to callee's LCL
+            # Set R13 to point to callee"s LCL
             bytecode.extend(["@LCL", "D=M", "@R13", "M=D"])
 
             # Set R14 to return address
-            bytecode.extend(["@R13", "D=M", "@5", "D=D-A", "@R14", "M=D"])
+            bytecode.extend(["@R13", "D=M", "@5", "D=D-A", "A=D", "D=M", "@R14", "M=D"])
 
-            # Set first callee's argument to be return value
+            # Set first callee"s argument to be return value
             bytecode.extend(VirtualMachineLibrary._get_primary("sp--"))
             bytecode.extend(VirtualMachineLibrary._get_primary("*a=*b", a="ARG", b="SP"))
 
-            # Reposition SP to be after first callee's argument
+            # Reposition SP to be after first callee"s argument
             bytecode.extend(["@ARG", "D=M+1", "@SP", "M=D"])
             
             # Restore registers
@@ -269,6 +279,6 @@ class VirtualMachineLibrary:
                 bytecode.extend(["@R13", "D=M", f"@{int(index) + 1}", "D=D-A", "A=D", "D=M", f"@{address}", "M=D"])
             
             # Return jump
-            bytecode.extend(["@R14", "A=M", "A=M", "0;JMP"])
+            bytecode.extend(["@R14", "A=M", "0;JMP"])
         
         return bytecode
