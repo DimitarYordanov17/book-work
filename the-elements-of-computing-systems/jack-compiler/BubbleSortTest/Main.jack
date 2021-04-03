@@ -18,16 +18,15 @@ class Main {
         }
 
         // Sort array
-        // BubbleSort.sort(list)
-        do Output.printInt(list);
-
-
-        /* Print array
+        do BubbleSort.sort(list, array_length);
+       
+        // Print array
         let counter = 0;
         while (counter < array_length) {
             do Output.printInt(list[counter]);
+            do Output.println();
             let counter = counter + 1;
-        } */
+        } 
 
         return;
     }
