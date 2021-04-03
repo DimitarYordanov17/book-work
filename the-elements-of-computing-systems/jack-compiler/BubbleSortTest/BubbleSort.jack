@@ -1,0 +1,21 @@
+// Bubble sort algorithm in Jack language. @DimitarYordanov17
+
+class BubbleSort {
+    function void sort(Array array, int length) {
+        var int counter, first_variable, second_variable;
+        let counter = 0;
+
+        while (counter < length - 1) {
+            let first_variable  = array[counter];
+            let second_variable = array[counter + 1];
+            
+            if (first_variable > second_variable) {
+                let array[counter] = second_variable;
+                let array[counter + 1] = first_variable;
+            }
+
+            let counter = counter + 1;
+        }
+        return;
+    }
+}

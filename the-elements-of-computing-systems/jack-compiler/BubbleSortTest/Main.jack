@@ -1,0 +1,34 @@
+// Bubble sort prorgam in Jack language. @DimitarYordanov17
+
+class Main {
+    function void main() {
+        var int array_length, counter, temp_value;
+        var Array list;
+
+        let array_length = Keyboard.readInt("How big is your array (array length)?:  ");
+
+        let list = Array.new(array_length);
+        
+        // Collect input data
+        let counter = 0;
+        while (counter < array_length) {
+            let temp_value = Keyboard.readInt("Enter number:  ");
+            let list[counter] = temp_value;
+            let counter = counter + 1;
+        }
+
+        // Sort array
+        // BubbleSort.sort(list)
+        do Output.printInt(list);
+
+
+        /* Print array
+        let counter = 0;
+        while (counter < array_length) {
+            do Output.printInt(list[counter]);
+            let counter = counter + 1;
+        } */
+
+        return;
+    }
+}
