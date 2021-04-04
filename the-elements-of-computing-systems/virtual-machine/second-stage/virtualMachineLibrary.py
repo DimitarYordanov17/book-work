@@ -1,4 +1,4 @@
-# A bytecode library for the VM code > Hack machine language translation. @DimitarYordanov17
+# An assembly library for the VM code > Hack machine language translation. @DimitarYordanov17
 
 class VirtualMachineLibrary:
     """
