@@ -50,7 +50,16 @@ class JackTranslatorLibrary:
 	"""
 	Main class to map the Jack language to intermediate (VM) code
 	"""
-	SYMBOLS = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&',',', '<', '>', '=', '~']
+	SYNTAX_ELEMENTS = {
+
+	"symbols": ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&',',', '<', '>', '=', '~'],
+
+	"keywords": ['class', 'constructor', 'function',
+				'method', 'field', 'static', 'var',
+				'int', 'char', 'boolean', 'void', 'true',
+				'false', 'null', 'this', 'let', 'do',
+				'if', 'else', 'while', 'return'],
+	}
 
 	def parse_file(input_file_name):
 		"""
@@ -78,7 +87,7 @@ class JackTranslatorLibrary:
 			file_text = file_text.replace("\n", " ")
 
 			# Wider all symbols
-			for symbol in JackTranslatorLibrary.SYMBOLS:
+			for symbol in JackTranslatorLibrary.SYNTAX_ELEMENTS["symbols"]:
 				widened_symbol = " " + symbol + " "
 				file_text = file_text.replace(symbol, widened_symbol)
 
@@ -93,9 +102,35 @@ class JackTranslatorLibrary:
 			input_file.seek(0)
 			
 			for token in file_text:
-				input_file.write(token + '\n')
+				classified_token = JackTranslatorLibrary._classify_token(token)
+				input_file.write(classified_token + '\n')
 
 			input_file.truncate()
+
+	def _classify_token(token):
+		"""
+		Append tags to a token
+		"""
+		token_type = ""
+
+		if token in JackTranslatorLibrary.SYNTAX_ELEMENTS["keywords"]:
+			token_type = "keyword"
+
+		elif token in JackTranslatorLibrary.SYNTAX_ELEMENTS["symbols"]:
+			token_type = "symbol"
+
+		elif '"' in token_type:
+			token_type = "StringConstant"
+
+		elif token[0].isnumeric():
+			token_type = "integerConstant"
+
+		else:
+			token_type = "identifier"
+
+		classified_token = f"<{token_type}> {token} </{token_type}>"
+
+		return classified_token
 
 	def _proccess_comment(line, comment):
 		"""
