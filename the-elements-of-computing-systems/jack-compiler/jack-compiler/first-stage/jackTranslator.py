@@ -28,12 +28,12 @@ class JackTranslator:
         os.system(f"cp {input_file_name} {output_file_name}")
         JackTranslatorLibrary.clean(output_file_name)
         JackTranslatorLibrary.tokenize(output_file_name)
-        xml_code = JackTranslatorLibrary.parse_file(output_file_name)
+        #xml_code = JackTranslatorLibrary.parse_file(output_file_name)
 
-        with open(output_file_name, "w") as output_file:
-           output_file.seek(0)
-           for line in xml_code:
-                output_file.write(line + '\n')
+        #with open(output_file_name, "w") as output_file:
+        #   output_file.seek(0)
+        #   for line in xml_code:
+        #        output_file.write(line + '\n')
 
 
 JackTranslator.construct_xml(sys.argv[1])

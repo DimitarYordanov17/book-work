@@ -50,6 +50,7 @@ class JackTranslatorLibrary:
 	"""
 	Main class to map the Jack language to intermediate (VM) code
 	"""
+	SYMBOLS = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&',',', '<', '>', '=', '~']
 
 	def parse_file(input_file_name):
 		"""
@@ -60,6 +61,41 @@ class JackTranslatorLibrary:
 		xml_code = jack_parser.get_xml_code()
 
 		return xml_code
+
+	def tokenize(input_file_name):
+		"""
+		Tokenizes a file, spreading each keyword on a newline
+		"""
+
+		with open(input_file_name, 'r+') as input_file:
+			input_file.seek(0)
+			file_text = input_file.read()
+
+			# Clean trailing spaces
+			file_text = file_text.strip()
+
+			# Clean all \n
+			file_text = file_text.replace("\n", " ")
+
+			# Wider all symbols
+			for symbol in JackTranslatorLibrary.SYMBOLS:
+				widened_symbol = " " + symbol + " "
+				file_text = file_text.replace(symbol, widened_symbol)
+
+			# Clean all in-file spaces
+			while "  " in file_text:
+				file_text = file_text.replace("  ", " ")
+
+		
+			# Split into tokens
+			file_text = file_text.split()
+			
+			input_file.seek(0)
+			
+			for token in file_text:
+				input_file.write(token + '\n')
+
+			input_file.truncate()
 
 	def _proccess_comment(line, comment):
 		"""
