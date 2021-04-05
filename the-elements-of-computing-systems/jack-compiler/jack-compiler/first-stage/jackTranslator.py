@@ -3,9 +3,10 @@
 # To run: python3 jackTranslator.py {path} {should standard library be added}
 # (This is the first-stage translator which is capable of only tokenizing and parsing a .jack file/directory, resulting in XML file)
 
-from jackTranslatorLibary import JackTranslatorLibrary
+from jackTranslatorLibrary import JackTranslatorLibrary
 import os
 import sys
+
 
 class JackTranslator:
     """
@@ -19,10 +20,20 @@ class JackTranslator:
 
         return 0
 
-    def clean(input_file_name):
-    	"""
-		Clean a .jack file - remove comments and whitespaces
-    	"""
+    def construct_xml(input_file_name):
+        """
+        Parses a single .jack file, resulting in .xml file
+        """
+        output_file_name = input_file_name.split(".")[0] + ".xml"
+        os.system(f"cp {input_file_name} {output_file_name}")
+        JackTranslatorLibrary.clean(output_file_name)
+        JackTranslatorLibrary.tokenize(output_file_name)
+        xml_code = JackTranslatorLibrary.parse_file(output_file_name)
+
+        with open(output_file_name, "w") as output_file:
+           output_file.seek(0)
+           for line in xml_code:
+                output_file.write(line + '\n')
 
 
-    	return 0
+JackTranslator.construct_xml(sys.argv[1])
