@@ -1,0 +1,76 @@
+<class>
+<keyword> class </keyword>
+<identifier> BubbleSort </identifier>
+<symbol> { </symbol>
+<classVarDec>
+<keyword> var </keyword>
+<keyword> int </keyword>
+<identifier> a </identifier>
+<symbol> , </symbol>
+<identifier> b </identifier>
+<symbol> , </symbol>
+<identifier> c </identifier>
+<symbol> , </symbol>
+<identifier> d </identifier>
+<symbol> ; </symbol>
+</classVarDec>
+<classVarDec>
+<keyword> var </keyword>
+<identifier> bool </identifier>
+<identifier> test </identifier>
+<symbol> ; </symbol>
+</classVarDec>
+<subroutineDec>
+<keyword> function </keyword>
+<keyword> void </keyword>
+<identifier> sort </identifier>
+<symbol> ( </symbol>
+<parameterList>
+<identifier> Array </identifier>
+<identifier> array </identifier>
+<symbol> , </symbol>
+<keyword> int </keyword>
+<identifier> length </identifier>
+</parameterList>
+<symbol> ) </symbol>
+<symbol> { </symbol>
+</subroutineDec>
+<keyword> var </keyword>
+<keyword> int </keyword>
+<identifier> counter </identifier>
+<symbol> , </symbol>
+<identifier> first_variable </identifier>
+<symbol> , </symbol>
+<identifier> second_variable </identifier>
+<symbol> , </symbol>
+<identifier> double_length </identifier>
+<subroutineDec>
+<symbol> , </symbol>
+<identifier> main_counter </identifier>
+<symbol> ; </symbol>
+<symbol> } </symbol>
+<keyword> method </keyword>
+<keyword> void </keyword>
+<identifier> sort </identifier>
+<symbol> ( </symbol>
+<parameterList>
+<identifier> asd </identifier>
+<identifier> asd </identifier>
+<symbol> , </symbol>
+<identifier> asd </identifier>
+<identifier> asd </identifier>
+</parameterList>
+<symbol> ) </symbol>
+<symbol> { </symbol>
+</subroutineDec>
+<keyword> var </keyword>
+<keyword> int </keyword>
+<identifier> pedal </identifier>
+<symbol> , </symbol>
+<identifier> gei </identifier>
+<symbol> , </symbol>
+<identifier> taralqsnik </identifier>
+<symbol> ; </symbol>
+<symbol> } </symbol>
+<symbol> } </symbol>
+</class>
