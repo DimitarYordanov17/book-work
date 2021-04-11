@@ -29,5 +29,6 @@ class JackTranslator:
         JackTranslatorLibrary.clean(output_file_name)
         JackTranslatorLibrary.tokenize(output_file_name)
         JackTranslatorLibrary.parse_file(output_file_name)
+        JackTranslatorLibrary.tabularize(output_file_name)
 
-JackTranslator.construct_xml("BubbleSort.jack")
+JackTranslator.construct_xml(sys.argv[1])

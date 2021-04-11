@@ -223,7 +223,7 @@ class JackTranslatorLibraryParser:
 
         self.row_pointer += 1
 
-        next_token = JackTranslatorLibraryParser._get_token_value(self.tokens[self.row_pointer + 1])
+        next_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer + 1])
 
         if next_token == ".":  # Method call
             self.row_pointer += 4
@@ -316,7 +316,7 @@ class JackTranslatorLibraryParser:
         """
         Parse expression list. Node of _parse_let;do;if;while;return
         """
-        current_token = JackTranslatorLibraryParser._get_token_value(self.tokens[self.row_pointer])
+        current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
 
         if current_token not in JackTranslatorLibrary.SYNTAX_ELEMENTS["statements"]:
             return
@@ -557,3 +557,26 @@ class JackTranslatorLibrary:
                     input_file.write(line)
 
             input_file.truncate()
+
+    def tabularize(input_file_name):
+        """
+        Indent every tag between two upper tags, keep nested depth
+        """
+
+        with open(input_file_name, 'r+') as input_file:
+            lines = input_file.readlines()
+            input_file.seek(0)
+
+            depth = 0
+
+            for line in lines:
+                tabularized_line = ('\t' * depth) + line
+
+                if " " not in line:
+                    if "/" in line:
+                        depth -= 1
+                        tabularized_line = ('\t' * depth) + line
+                    else:
+                        depth += 1
+
+                input_file.write(tabularized_line)
