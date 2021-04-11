@@ -232,7 +232,7 @@ class JackTranslatorLibraryParser:
 
         JackTranslatorLibraryParser._parse_expression_list(self)
 
-        self.row_pointer += 1
+        self.row_pointer += 2
 
     def _parse_if(self):
         """
@@ -318,7 +318,7 @@ class JackTranslatorLibraryParser:
         """
         current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
 
-        if current_token not in JackTranslatorLibrary.SYNTAX_ELEMENTS["statements"]:
+        if current_token == ")":
             return
 
         tag = "<expressionList>\n"
@@ -328,7 +328,7 @@ class JackTranslatorLibraryParser:
 
         JackTranslatorLibraryParser._parse_expression(self)
 
-        current_token = JackTranslatorLibraryParser._get_token_value(self.tokens[self.row_pointer])
+        current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
 
         while current_token == ",":
             JackTranslatorLibraryParser._parse_expression(self)
