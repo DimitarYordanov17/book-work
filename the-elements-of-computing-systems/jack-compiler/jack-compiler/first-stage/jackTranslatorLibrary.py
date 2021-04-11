@@ -289,6 +289,121 @@ class JackTranslatorLibraryParser:
         JackTranslatorLibraryParser._parse_expression(self)
         self.row_pointer += 1
 
+    # ~~~~~~~~~~~~ Statement auxiliary parsing ~~~~~~~~~~~~~~~~~
+    def _parse_expression(self):
+        """
+        Parse an expression. Node of _parse_expressionList
+        """
+
+        tag = "<expression>\n"
+
+        self.tokens.insert(self.row_pointer, tag)
+        self.row_pointer += 1
+
+        JackTranslatorLibraryParser._parse_term(self)
+
+        current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
+
+        while current_token in JackTranslatorLibrary.SYNTAX_ELEMENTS["op"]:
+            self.row_pointer += 1
+            JackTranslatorLibraryParser._parse_term(self)
+            current_token = self.tokens[self.row_pointer]
+
+        self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, tag))
+        self.row_pointer += 1
+
+    def _parse_expression_list(self):
+        """
+        Parse expression list. Node of _parse_let;do;if;while;return
+        """
+        current_token = JackTranslatorLibraryParser._get_token_value(self.tokens[self.row_pointer])
+
+        if current_token not in JackTranslatorLibrary.SYNTAX_ELEMENTS["statements"]:
+            return
+
+        tag = "<expressionList>\n"
+
+        self.tokens.insert(self.row_pointer, tag)
+        self.row_pointer += 1
+
+        JackTranslatorLibraryParser._parse_expression(self)
+
+        current_token = JackTranslatorLibraryParser._get_token_value(self.tokens[self.row_pointer])
+
+        while current_token == ",":
+            JackTranslatorLibraryParser._parse_expression(self)
+            current_token = self.tokens[self.row_pointer]
+
+        self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, tag))
+        self.row_pointer += 1
+
+    def _parse_term(self):
+        """
+        Parse term - recursion might be used. Node of _parse_expression
+        """
+
+        tag = "<term>\n"
+
+        current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
+        current_token_type = self.tokens[self.row_pointer].split(" ")[0][1:-1]
+
+        next_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer + 1])
+
+        self.tokens.insert(self.row_pointer, tag)
+        self.row_pointer += 1
+
+        if next_token == '[':
+            self.row_pointer += 2
+
+            JackTranslatorLibraryParser._parse_expression(self)
+            self.row_pointer += 1
+
+        elif current_token == "(":
+            self.row_pointer += 1
+
+            JackTranslatorLibraryParser._parse_expression(self)
+            self.row_pointer += 1
+
+        elif not ("Constant" in current_token_type or "keyword" == current_token_type or "identifier"):
+            if current_token == "-" or current_token == "~":  # Unary op
+                self.row_pointer += 1
+
+                JackTranslatorLibraryParser._parse_term(self)
+
+            else:  # Subroutine call
+                if next_token == ".":  # Method call
+                    self.row_pointer += 4
+                else:  # Function call
+                    self.row_pointer += 2
+
+                JackTranslatorLibraryParser._parse_expression_list(self)
+                self.row_pointer += 1
+        else:
+            self.row_pointer += 1
+
+        self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, tag))
+        self.row_pointer += 1
+
+    # ~~~~~~~~~~~ Tag auxiliary ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    def _get_closed_tag(self, tag):
+        """
+        Appends '/' in the second place of the input
+        """
+
+        tag_list = list(tag)
+        tag_list.insert(1, "/")
+        return "".join(tag_list)
+
+    def _get_token_value(self, tag):
+        """
+        Returns mediocre keyword
+        """
+        try:
+            return tag.split()[1]
+        except:
+            return tag
+
+
 
 class JackTranslatorLibrary:
     """
