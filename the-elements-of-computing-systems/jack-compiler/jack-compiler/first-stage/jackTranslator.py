@@ -30,10 +30,4 @@ class JackTranslator:
         JackTranslatorLibrary.tokenize(output_file_name)
         JackTranslatorLibrary.parse_file(output_file_name)
 
-        #with open(output_file_name, "w") as output_file:
-        #   output_file.seek(0)
-        #   for line in xml_code:
-        #        output_file.write(line + '\n')
-
-
-JackTranslator.construct_xml(sys.argv[1])
+JackTranslator.construct_xml("BubbleSort.jack")
