@@ -189,7 +189,7 @@ class JackTranslatorLibraryParser:
             current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
             current_token_full = self.tokens[self.row_pointer]
 
-        self.tokens.insert(self.row_pointer, tag)
+        self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, tag))
         self.row_pointer += 1
 
     # ~~~~~~~~~~~~~~ General statement parsing ~~~~~~~~~~~~~~~~~
@@ -557,5 +557,3 @@ class JackTranslatorLibrary:
                     input_file.write(line)
 
             input_file.truncate()
-
-        return 0
