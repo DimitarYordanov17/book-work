@@ -3,6 +3,196 @@
 import re
 import copy
 
+class JackTranslatorLibraryParser:
+    """
+    Additional class to hold the functions, needed for parsing a .jack file into .xml
+    (A cleaned and tokenized file should be passed)
+    """
+
+    def __init__(self, input_file_name):
+        self.input_file_name = input_file_name
+        self.input_file = open(input_file_name, 'r')
+        self.tokens = self.input_file.readlines()
+
+        self.row_pointer = 0
+
+    def parse(self):
+        """
+        Parse a file
+        """
+
+        JackTranslatorLibraryParser._parse_class(self)
+
+        with open(self.input_file_name, 'w') as input_file:
+            input_file.seek(0)
+
+            for line in self.tokens:
+                input_file.write(line)
+
+            input_file.truncate()
+
+    # ~~~~~~~~~~~~~ File parsing nodes ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    def _parse_class(self):
+        """
+        Parse a class
+        """
+
+        tag = "<class>\n"
+
+        self.tokens.insert(self.row_pointer, tag)
+        self.tokens.insert(len(self.tokens), JackTranslatorLibraryParser._get_closed_tag(self, tag))
+
+        self.row_pointer += 4
+
+        JackTranslatorLibraryParser._parse_variableDeclarations(self, class_vars=True)
+        JackTranslatorLibraryParser._parse_subroutineDeclarations(self)
+
+    def _parse_variableDeclarations(self, class_vars=False):
+        """
+        Parse variable declarations. Node of _parse_class
+        """
+
+        tag = "<classVarDec>\n" if class_vars else "<varDec>\n"
+        body = self.tokens[self.row_pointer:]
+
+        for token in body:
+            token_value = JackTranslatorLibraryParser._get_token_value(self, token)
+
+            if token_value == "var":
+                self.tokens.insert(self.row_pointer, tag)
+                self.row_pointer += 1
+
+            if token_value == ";":
+                self.tokens.insert(self.row_pointer + 1, JackTranslatorLibraryParser._get_closed_tag(self, tag))
+                self.row_pointer += 1
+
+            self.row_pointer += 1
+
+            if class_vars:
+                if token_value in JackTranslatorLibrary.SYNTAX_ELEMENTS["subroutines"]:
+                    self.row_pointer -= 1
+                    break
+            else:
+                if token_value in JackTranslatorLibrary.SYNTAX_ELEMENTS["statements"]:
+                    self.row_pointer -= 1
+                    break
+
+    def _parse_subroutineDeclarations(self):
+        """
+        Parse subroutine declarations for a class. Node of _parse_class
+        """
+
+        current_token = self.tokens[self.row_pointer]
+
+        while current_token != "</class>\n":
+            JackTranslatorLibraryParser._parse_subroutineDeclaration(self)
+            current_token = self.tokens[self.row_pointer + 1]
+
+    def _parse_subroutineDeclaration(self):
+        """
+        Parse a single subroutine declaration. Node of _parse_subroutineDeclarations
+        """
+
+        dec_tag = "<subroutineDec>\n"
+        param_list_tag = "<parameterList>\n"
+
+        self.tokens.insert(self.row_pointer, dec_tag)
+        self.row_pointer += 1
+
+        subroutine_tokens = self.tokens[self.row_pointer:]
+
+        for index, token in enumerate(subroutine_tokens):
+            token_value = JackTranslatorLibraryParser._get_token_value(self, token)
+
+            if token_value == "(":
+                if JackTranslatorLibraryParser._get_token_value(self, subroutine_tokens[index + 1]) == ")":
+                    pass
+                else:
+                    self.tokens.insert(self.row_pointer, param_list_tag)
+                    self.row_pointer += 1
+
+            elif token_value == ")":
+                self.tokens.insert(self.row_pointer + 1,
+                                   JackTranslatorLibraryParser._get_closed_tag(self, param_list_tag))
+                self.row_pointer += 3
+                break
+
+            self.row_pointer += 1
+
+        JackTranslatorLibraryParser._parse_subroutineBody(self)
+
+        self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, dec_tag))
+        self.row_pointer += 1
+
+    def _parse_subroutineBody(self):
+        """
+        Parse all tokens in a subroutine body. Node of _parse_subroutineDeclaration
+        """
+
+        tag = "<subroutineBody>\n"
+
+        self.tokens.insert(self.row_pointer, tag)
+
+        self.row_pointer += 1
+
+        JackTranslatorLibraryParser._parse_variableDeclarations(self)
+
+        JackTranslatorLibraryParser._parse_statements(self)
+
+        self.row_pointer += 1
+        self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, tag))
+        self.row_pointer += 1
+
+    def _parse_statements(self, stop_value = "</subroutineDec>\n"):
+        """
+        Parse subroutine body statements. Node of _parse_subroutineBody
+        """
+
+        tag = "<statements>\n"
+
+        self.tokens.insert(self.row_pointer, tag)
+        self.row_pointer += 1
+
+        current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
+        current_token_full = self.tokens[self.row_pointer]
+
+        while current_token_full != stop_value:
+
+            statement_type = current_token + "Statement" if current_token != "return" else "ReturnStatement"
+            statement_tag = f"<{statement_type}>\n"
+
+            self.tokens.insert(self.row_pointer, statement_tag)
+            self.row_pointer += 1
+
+            if current_token == "let":
+                JackTranslatorLibraryParser._parse_let(self)
+
+            elif current_token == "do":
+                JackTranslatorLibraryParser._parse_do(self)
+
+            elif current_token == "if":
+                JackTranslatorLibraryParser._parse_if(self)
+
+            elif current_token == "while":
+                JackTranslatorLibraryParser._parse_while(self)
+
+            elif current_token == "return":
+                JackTranslatorLibraryParser._parse_return(self)
+                self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, statement_tag))
+                self.row_pointer += 1
+                break
+
+            self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, statement_tag))
+            self.row_pointer += 1
+
+            current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
+            current_token_full = self.tokens[self.row_pointer]
+
+        self.tokens.insert(self.row_pointer, tag)
+        self.row_pointer += 1
+
+
 class JackTranslatorLibrary:
     """
     Main class to map the Jack language to intermediate (VM) code
