@@ -13,7 +13,7 @@ class JackTranslatorLibraryParser:
         self.input_file_name = input_file_name
         self.input_file = open(input_file_name, 'r')
         self.tokens = self.input_file.readlines()
-        self.initial_length = len(self.tokens)
+        
         self.row_pointer = 0
 
     def parse(self):
