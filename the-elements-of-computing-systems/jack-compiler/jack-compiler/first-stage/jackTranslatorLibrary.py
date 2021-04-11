@@ -13,7 +13,7 @@ class JackTranslatorLibraryParser:
         self.input_file_name = input_file_name
         self.input_file = open(input_file_name, 'r')
         self.tokens = self.input_file.readlines()
-
+        self.initial_length = len(self.tokens)
         self.row_pointer = 0
 
     def parse(self):
@@ -59,7 +59,7 @@ class JackTranslatorLibraryParser:
         for token in body:
             token_value = JackTranslatorLibraryParser._get_token_value(self, token)
 
-            if token_value == "var":
+            if token_value == "var" or token_value == "static" or token_value == "field":
                 self.tokens.insert(self.row_pointer, tag)
                 self.row_pointer += 1
 
@@ -85,7 +85,7 @@ class JackTranslatorLibraryParser:
 
         current_token = self.tokens[self.row_pointer]
 
-        while current_token != "</class>\n":
+        while current_token != "</class>\n" and current_token != "<symbol> } </symbol>\n":
             JackTranslatorLibraryParser._parse_subroutineDeclaration(self)
             current_token = self.tokens[self.row_pointer]
 
@@ -112,7 +112,6 @@ class JackTranslatorLibraryParser:
                 else:
                     self.tokens.insert(self.row_pointer, param_list_tag)
                     self.row_pointer += 1
-
             elif token_value == ")":
                 self.tokens.insert(self.row_pointer + 1,
                                    JackTranslatorLibraryParser._get_closed_tag(self, param_list_tag))
@@ -158,7 +157,6 @@ class JackTranslatorLibraryParser:
         current_token_full = self.tokens[self.row_pointer]
 
         while current_token_full != stop_value:
-
             statement_type = current_token + "Statement" if current_token != "return" else "ReturnStatement"
             statement_tag = f"<{statement_type}>\n"
 
@@ -331,8 +329,9 @@ class JackTranslatorLibraryParser:
         current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
 
         while current_token == ",":
+            self.row_pointer += 1
             JackTranslatorLibraryParser._parse_expression(self)
-            current_token = self.tokens[self.row_pointer]
+            current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
 
         self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, tag))
         self.row_pointer += 1
