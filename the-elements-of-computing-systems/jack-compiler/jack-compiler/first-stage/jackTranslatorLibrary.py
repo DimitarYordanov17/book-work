@@ -13,7 +13,7 @@ class JackTranslatorLibraryParser:
         self.input_file_name = input_file_name
         self.input_file = open(input_file_name, 'r')
         self.tokens = self.input_file.readlines()
-        
+
         self.row_pointer = 0
 
     def parse(self):
@@ -110,12 +110,12 @@ class JackTranslatorLibraryParser:
                     self.row_pointer += 3
                     break
                 else:
-                    self.tokens.insert(self.row_pointer, param_list_tag)
                     self.row_pointer += 1
+                    self.tokens.insert(self.row_pointer, param_list_tag)
             elif token_value == ")":
-                self.tokens.insert(self.row_pointer + 1,
+                self.tokens.insert(self.row_pointer,
                                    JackTranslatorLibraryParser._get_closed_tag(self, param_list_tag))
-                self.row_pointer += 2
+                self.row_pointer += 3
                 break
 
             self.row_pointer += 1
@@ -286,6 +286,7 @@ class JackTranslatorLibraryParser:
 
         JackTranslatorLibraryParser._parse_expression(self)
         self.row_pointer += 1
+        
 
     # ~~~~~~~~~~~~ Statement auxiliary parsing ~~~~~~~~~~~~~~~~~
     def _parse_expression(self):
@@ -351,33 +352,32 @@ class JackTranslatorLibraryParser:
         self.tokens.insert(self.row_pointer, tag)
         self.row_pointer += 1
 
-        if next_token == '[':
+        if next_token == '[': # Array accessing
             self.row_pointer += 2
 
             JackTranslatorLibraryParser._parse_expression(self)
             self.row_pointer += 1
 
-        elif current_token == "(":
+        elif current_token == "(": # Expression in brackets
             self.row_pointer += 1
 
             JackTranslatorLibraryParser._parse_expression(self)
             self.row_pointer += 1
 
-        elif not ("Constant" in current_token_type or "keyword" == current_token_type or "identifier"):
-            if current_token == "-" or current_token == "~":  # Unary op
-                self.row_pointer += 1
+        elif current_token == "-" or current_token == "~":  # Unary op
+            self.row_pointer += 1
+            JackTranslatorLibraryParser._parse_term(self)
 
-                JackTranslatorLibraryParser._parse_term(self)
+        elif next_token == "(" or next_token == ".":  # Subroutine call
+            if next_token == ".":  # Method call
+                self.row_pointer += 4
+            else:  # Function call
+                self.row_pointer += 2
 
-            else:  # Subroutine call
-                if next_token == ".":  # Method call
-                    self.row_pointer += 4
-                else:  # Function call
-                    self.row_pointer += 2
+            JackTranslatorLibraryParser._parse_expression_list(self)
+            self.row_pointer += 1
 
-                JackTranslatorLibraryParser._parse_expression_list(self)
-                self.row_pointer += 1
-        else:
+        else: # Single variable
             self.row_pointer += 1
 
         self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, tag))
