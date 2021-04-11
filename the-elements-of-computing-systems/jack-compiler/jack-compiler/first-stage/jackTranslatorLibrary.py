@@ -192,6 +192,103 @@ class JackTranslatorLibraryParser:
         self.tokens.insert(self.row_pointer, tag)
         self.row_pointer += 1
 
+    # ~~~~~~~~~~~~~~ General statement parsing ~~~~~~~~~~~~~~~~~
+
+    def _parse_let(self):
+        """
+        Parse let statement. Node of _parse_statements
+        """
+
+        self.row_pointer += 2
+
+        current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
+
+        if current_token == "=":
+            self.row_pointer += 1
+            JackTranslatorLibraryParser._parse_expression(self)
+            self.row_pointer += 1
+
+        else:
+            self.row_pointer += 1
+            JackTranslatorLibraryParser._parse_expression(self)
+            self.row_pointer += 2
+
+            JackTranslatorLibraryParser._parse_expression(self)
+            self.row_pointer += 1
+
+    def _parse_do(self):
+        """
+        Parse do statement. Node of _parse_statements
+        """
+
+        self.row_pointer += 1
+
+        next_token = JackTranslatorLibraryParser._get_token_value(self.tokens[self.row_pointer + 1])
+
+        if next_token == ".":  # Method call
+            self.row_pointer += 4
+        else:  # Function call
+            self.row_pointer += 2
+
+        JackTranslatorLibraryParser._parse_expression_list(self)
+
+        self.row_pointer += 1
+
+    def _parse_if(self):
+        """
+        Parse if statement. Node of _parse_statements
+        """
+
+        self.row_pointer += 2
+
+        JackTranslatorLibraryParser._parse_expression(self)
+
+        self.row_pointer += 2
+
+        JackTranslatorLibraryParser._parse_statements(self, stop_value="<symbol> } </symbol>\n")
+
+        self.row_pointer += 1
+
+        current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
+
+        if current_token == "else":
+            self.row_pointer += 2
+
+            JackTranslatorLibraryParser._parse_statements(self, stop_value="<symbol> } </symbol>\n")
+
+            self.row_pointer += 1
+
+    def _parse_while(self):
+        """
+        Parse while statement. Node of _parse_statements
+        """
+
+        self.row_pointer += 2
+
+        JackTranslatorLibraryParser._parse_expression(self)
+
+        self.row_pointer += 2
+
+        JackTranslatorLibraryParser._parse_statements(self, stop_value="<symbol> } </symbol>\n")
+
+        self.row_pointer += 1
+
+    def _parse_return(self):
+        """
+        Parse return statement. Node of _parse_statements
+        """
+
+        self.row_pointer += 1
+
+        current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
+
+        if current_token == ";":
+            self.row_pointer += 1
+            return
+
+        JackTranslatorLibraryParser._parse_expression(self)
+        self.row_pointer += 1
+
 
 class JackTranslatorLibrary:
     """
