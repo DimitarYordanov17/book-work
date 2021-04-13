@@ -303,10 +303,9 @@ class JackTranslatorLibraryParser:
 
         current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
 
-        while current_token in JackTranslatorLibrary.SYNTAX_ELEMENTS["op"]:
+        if current_token in JackTranslatorLibrary.SYNTAX_ELEMENTS["op"]:
             self.row_pointer += 1
-            JackTranslatorLibraryParser._parse_term(self)
-            current_token = self.tokens[self.row_pointer]
+            JackTranslatorLibraryParser._parse_expression(self)
 
         self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, tag))
         self.row_pointer += 1
