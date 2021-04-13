@@ -1,7 +1,7 @@
 # A jack translator (front-end). Jack code to Intermediate code. @DimitarYordanov17
 
-# To run: python3 jackTranslator.py {path} {should standard library be added}
-# (This is the first-stage translator which is capable of only tokenizing and parsing a .jack file/directory, resulting in XML file)
+# To run: python3 jackTranslator.py {your .jack file}
+# (This is the first-stage translator which is capable of proccessing a single .jack file resulting in a XML file)
 
 from jackTranslatorLibrary import JackTranslatorLibrary
 import os
