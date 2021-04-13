@@ -1,6 +1,4 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
-# (This is a first-stage library - only Jack -> XML proccessing, tokenizng, cleaning and tabularizing)
-# (More info about the parsing logic at line 197)
 
 import re
 
