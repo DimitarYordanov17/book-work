@@ -201,7 +201,14 @@ class JackTranslatorLibrary:
 class JackTranslatorLibraryCodeGenerator:
     """
     Responsible for the VM code generation of Jack commands and other auxiliary functions (such as building symbolic table)
-    XML -> VM
+    XML -> VM.
+    
+    More information on the translating logic:
+    // We have a basic initialization where each instance contains input_commands (all the XML tags) and
+    // subroutines (a dictionary - subroutine_name: [subroutine_declaration, subroutine_symbolic_table, vm_code]).
+    // Next, we translate all the class information (class variables...). After that we go through every
+    // subroutine and we translate it to VM code, using its own symbolic table. To translate the file means
+    // to fill up instance's vm_code attribute
     """
 
     def __init__(self, input_file_name):
@@ -209,24 +216,51 @@ class JackTranslatorLibraryCodeGenerator:
         self.symbolic_table = []
         self.vm_code = []
 
+        self.subroutines = {}
+        self.class_info = {}
+
     def translate(self):
         """
-        Generate symbolic table and parse input commands
+        Get class and subroutines info. Generate symbolic table for every subroutine. Start parsing every subroutine
         """
         
-        print(self.input_commands)
+        JackTranslatroLibraryCodeGenerator._get_class_info(self)
+        JackTranslatorLibraryCodeGenerator._get_subroutines(self)
 
-        #JackTranslatorLibraryCodeGenerator._generate_symbolic_table()
-        #JackTranslatorLibraryCodeGenerator._parse_commands()
+        for subroutine_name in self.subroutines.keys():
+            symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(subroutine_name)
+            self.subroutines[subroutine_name].append(symbolic_table)
+        
+        for subroutine_name in self.subroutines.keys():
+            subroutine_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine(subroutine_name)
+            self.subroutines[subroutine_name].append(subroutine_vm_code)
 
-    def _generate_symbolic_table(self):
+
+    def _get_subroutines(self)
+        """
+        Find all code subroutines and add them to self.subroutines
+        """
+
+        return 0
+    
+    
+    def get_class_info(self):
+        """
+        Collect all the class info, which is going to be used in translation later
+        """
+
+        return 0
+
+
+    def _generate_symbolic_table(self, subroutine_name):
         """
         Build up symbolic table to handle identifiers type and scope problems
         """
         
         return 0
 
-    def _parse_commands(self):
+
+    def _translate_subroutine(self, subroutine_name):
         """
         Parse Jack commands and write the VM corresponding codes into current instance vm_code
         """
