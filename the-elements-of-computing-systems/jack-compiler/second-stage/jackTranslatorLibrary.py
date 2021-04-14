@@ -224,19 +224,23 @@ class JackTranslatorLibraryCodeGenerator:
         Get class and subroutines info. Generate symbolic table for every subroutine. Start parsing every subroutine
         """
         
-        JackTranslatroLibraryCodeGenerator._get_class_info(self)
-        JackTranslatorLibraryCodeGenerator._get_subroutines(self)
-
-        for subroutine_name in self.subroutines.keys():
-            symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(subroutine_name)
-            self.subroutines[subroutine_name].append(symbolic_table)
+        JackTranslatorLibraryCodeGenerator._strip_input_commands(self)
+        JackTranslatorLibraryCodeGenerator._get_class_info(self)
         
-        for subroutine_name in self.subroutines.keys():
-            subroutine_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine(subroutine_name)
-            self.subroutines[subroutine_name].append(subroutine_vm_code)
+        print(self.class_info)
+
+        #JackTranslatorLibraryCodeGenerator._get_subroutines(self)
+
+        #for subroutine_name in self.subroutines.keys():
+        #    symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(subroutine_name)
+        #    self.subroutines[subroutine_name].append(symbolic_table)
+        
+        #for subroutine_name in self.subroutines.keys():
+        #    subroutine_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine(subroutine_name)
+        #    self.subroutines[subroutine_name].append(subroutine_vm_code)
 
 
-    def _get_subroutines(self)
+    def _get_subroutines(self):
         """
         Find all code subroutines and add them to self.subroutines
         """
@@ -244,12 +248,32 @@ class JackTranslatorLibraryCodeGenerator:
         return 0
     
     
-    def get_class_info(self):
+    def _get_class_info(self):
         """
-        Collect all the class info, which is going to be used in translation later
+        Get class name and generate class symbolic table, which are going to be used in translation later
         """
 
-        return 0
+        class_name = JackTranslatorLibraryParser._get_token_value(self, self.input_commands[2])
+        
+        class_symbolic_table = {}
+
+        class_variable_declarations_starts = JackTranslatorLibraryCodeGenerator._get_all_occurrences(self.input_commands, "<classVarDec>")
+        class_variable_declarations_ends = JackTranslatorLibraryCodeGenerator._get_all_occurrences(self.input_commands, "</classVarDec>")
+
+        for starting_index, ending_index in zip(class_variable_declarations_starts, class_variable_declarations_ends):
+            variable_declaration = self.input_commands[starting_index + 1:ending_index - 1]
+            variable_declaration = [JackTranslatorLibraryParser._get_token_value(self, tag) for tag in variable_declaration]
+
+            variable_type = variable_declaration[0]
+            variable_kind = variable_declaration[1]
+            count = 0
+
+            variable_names = [name for name in variable_declaration[2:] if name != ',']
+
+            for variable_name in variable_names:
+                class_symbolic_table[variable_name] = [variable_type, variable_kind, count]
+        
+        self.class_info = [class_name, class_symbolic_table]
 
 
     def _generate_symbolic_table(self, subroutine_name):
@@ -266,6 +290,32 @@ class JackTranslatorLibraryCodeGenerator:
         """
 
         return 0
+
+    def _strip_input_commands(self):
+        """
+        Remove every \n for easier work
+        """
+
+        for index, line in enumerate(self.input_commands):
+            self.input_commands[index] = line.rstrip()
+
+    def _get_all_occurrences(elements_list, element):
+        """
+        Return all occurrences of a given element in elements_list
+        """
+        
+        index_list = []
+        index_position = 0
+
+        while True:
+            try:
+                index_position = elements_list.index(element, index_position)
+                index_list.append(index_position)
+                index_position += 1
+            except ValueError as e:
+                break
+
+        return index_list
 
 
 class JackTranslatorLibraryParser:
