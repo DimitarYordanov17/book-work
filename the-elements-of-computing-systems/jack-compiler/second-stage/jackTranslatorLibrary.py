@@ -213,18 +213,20 @@ class JackTranslatorLibraryCodeGenerator:
         """
         Generate symbolic table and parse input commands
         """
+        
+        print(self.input_commands)
 
-        JackTranslatorLibraryCodeGenerator._generate_symbolic_table()
-        JackTranslatorLibraryCodeGenerator._parse_commands()
+        #JackTranslatorLibraryCodeGenerator._generate_symbolic_table()
+        #JackTranslatorLibraryCodeGenerator._parse_commands()
 
     def _generate_symbolic_table(self):
         """
         Build up symbolic table to handle identifiers type and scope problems
         """
-
+        
         return 0
 
-   def _parse_commands(self):
+    def _parse_commands(self):
         """
         Parse Jack commands and write the VM corresponding codes into current instance vm_code
         """
