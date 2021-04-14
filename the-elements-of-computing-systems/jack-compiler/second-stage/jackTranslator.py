@@ -15,7 +15,7 @@ class JackTranslator:
 
     def translate(path):
         """
-        Translate a directory, .jack -> .vm
+        Translate a directory/file, .jack -> .vm
         """
         
         jack_files = []

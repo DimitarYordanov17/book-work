@@ -25,6 +25,13 @@ class JackTranslatorLibrary:
                      'if', 'else', 'while', 'return'],
     }
 
+    def translate_file(input_file_name):
+        """
+        Construct the corresponding VM code for Jack file translation
+        """
+
+        return 0
+
 
     def parse_file(input_file_name):
         """
