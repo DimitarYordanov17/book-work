@@ -35,7 +35,7 @@ class JackTranslator:
             output_file_name = jack_file_name + ".vm"
             jack_xml_file_name = jack_file_name + ".xml"
 
-            JackTranslator._generate_xml(jack_full_file_name)
+            JackTranslator._generate_xml(jack_full_file_name, tabularize=False)
 
             vm_code = JackTranslatorLibrary.translate_file(jack_xml_file_name)
             
@@ -48,7 +48,7 @@ class JackTranslator:
 
                 output_file.truncate()
         
-    def _generate_xml(input_file_name):
+    def _generate_xml(input_file_name, tabularize=True):
         """
         Parses a single .jack file, resulting in a .xml file
         """
@@ -61,7 +61,8 @@ class JackTranslator:
 
         JackTranslatorLibrary.parse_file(output_file_name)
 
-        JackTranslatorLibrary.tabularize(output_file_name)
+        if tabularize:
+            JackTranslatorLibrary.tabularize(output_file_name)
 
 
 JackTranslator.translate(sys.argv[1], generate_xml = True if sys.argv[2] == "yes" else False)
