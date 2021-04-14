@@ -4,7 +4,7 @@ import re
 
 class JackTranslatorLibrary:
     """
-    A main library class capable of Jack language syntax analysis
+    A main library class capable of Jack language syntax analysis and VM code generation
     """
 
 
@@ -18,7 +18,7 @@ class JackTranslatorLibrary:
 
         "op": ['+', '-', '*', '/', '&', '|', '<', '>', '='],
 
-        "keywords": ['class', 'constructor', 'function',
+        "keywords": ['class', 'generateor', 'function',
                      'method', 'field', 'static', 'var',
                      'int', 'char', 'boolean', 'void', 'true',
                      'false', 'null', 'this', 'let', 'do',
@@ -27,7 +27,7 @@ class JackTranslatorLibrary:
 
     def translate_file(input_file_name):
         """
-        Construct the corresponding VM code for Jack file translation
+        Generate the corresponding VM code for Jack file translation
         """
 
         return 0
@@ -35,7 +35,7 @@ class JackTranslatorLibrary:
 
     def parse_file(input_file_name):
         """
-        Makes use of the JackTranslatorLibraryParser class to construct a .xml file from a .jack one
+        Makes use of the JackTranslatorLibraryParser class to generate a .xml file from a .jack one
         """
 
         jack_parser = JackTranslatorLibraryParser(input_file_name)

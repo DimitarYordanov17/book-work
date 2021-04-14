@@ -1,6 +1,6 @@
 # A jack translator (front-end). Jack code to Intermediate code. @DimitarYordanov17
 
-# To run: python3 jackTranslator.py {path} {construct corresponding XML files, yes/no}
+# To run: python3 jackTranslator.py {path} {generate corresponding XML files, yes/no}
 
 from jackTranslatorLibrary import JackTranslatorLibrary
 import os
@@ -13,7 +13,7 @@ class JackTranslator:
     """
 
 
-    def translate(path, construct_xml=False):
+    def translate(path, generate_xml=False):
         """
         Translate a directory/file, .jack -> .vm
         """
@@ -40,10 +40,10 @@ class JackTranslator:
 
                 output_file.truncate()
 
-            if construct_xml:
-                JackTranslator._construct_xml(jack_file_name)
+            if generate_xml:
+                JackTranslator._generate_xml(jack_file_name)
         
-    def _construct_xml(input_file_name):
+    def _generate_xml(input_file_name):
         """
         Parses a single .jack file, resulting in a .xml file
         """
@@ -59,4 +59,4 @@ class JackTranslator:
         JackTranslatorLibrary.tabularize(output_file_name)
 
 
-JackTranslator.translate(sys.argv[1], construct_xml = True if sys.argv[2] == "yes" else False)
+JackTranslator.translate(sys.argv[1], generate_xml = True if sys.argv[2] == "yes" else False)
