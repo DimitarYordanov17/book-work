@@ -27,11 +27,9 @@ class JackTranslatorLibrary:
 
     def translate_file(input_file_name):
         """
-        Clean the input file and take care off operating the code generation part 
+        Handle the translation of a file
         """
                 
-        JackTranslatorLibrary.clean(input_file_name)
-
         jack_translator = JackTranslatorLibraryCodeGenerator(input_file_name)
         jack_translator.translate()
 
@@ -203,6 +201,7 @@ class JackTranslatorLibrary:
 class JackTranslatorLibraryCodeGenerator:
     """
     Responsible for the VM code generation of Jack commands and other auxiliary functions (such as building symbolic table)
+    XML -> VM
     """
 
     def __init__(self, input_file_name):
@@ -212,7 +211,7 @@ class JackTranslatorLibraryCodeGenerator:
 
     def translate(self):
         """
-        Generate symbolic table and parse input_commands
+        Generate symbolic table and parse input commands
         """
 
         JackTranslatorLibraryCodeGenerator._generate_symbolic_table()

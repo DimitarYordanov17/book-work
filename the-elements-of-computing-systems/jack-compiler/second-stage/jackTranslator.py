@@ -15,7 +15,7 @@ class JackTranslator:
 
     def translate(path, generate_xml=False):
         """
-        Translate a directory/file, .jack -> .vm
+        Translate a directory/file, .jack -> .vm. A middle .xml file is used and if generate_xml=True, we keep it
         """
        
         jack_files = []
@@ -29,24 +29,24 @@ class JackTranslator:
                     if ".jack" in file_name:
                       jack_files.append(file_name)
         
-        for jack_file_name in jack_files:
-            output_file_name = jack_file_name.split(".")[0] + ".vm"
-            jack_file_name_copy = jack_file_name.split(".")[0] + "-temp-copy.jack"
-            
-            os.system(f"cp {jack_file_name} {jack_file_name_copy}")
+        for jack_full_file_name in jack_files:
+            jack_file_name = jack_full_file_name.split(".")[0]
 
-            vm_code = JackTranslatorLibrary.translate_file(jack_file_name)
+            output_file_name = jack_file_name + ".vm"
+            jack_xml_file_name = jack_file_name + ".xml"
+
+            JackTranslator._generate_xml(jack_full_file_name)
+
+            vm_code = JackTranslatorLibrary.translate_file(jack_xml_file_name)
             
-            os.system(f"rm {jack_file_name_copy}")
+            if not generate_xml:
+                os.system(f"rm {jack_xml_file_name}")
 
             with open(output_file_name, 'w') as output_file:
                 for line in vm_code:
                     output_file.write(line)
 
                 output_file.truncate()
-
-            if generate_xml:
-                JackTranslator._generate_xml(jack_file_name)
         
     def _generate_xml(input_file_name):
         """
