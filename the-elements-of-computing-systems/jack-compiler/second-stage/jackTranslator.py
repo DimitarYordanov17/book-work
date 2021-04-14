@@ -31,9 +31,14 @@ class JackTranslator:
         
         for jack_file_name in jack_files:
             output_file_name = jack_file_name.split(".")[0] + ".vm"
+            jack_file_name_copy = jack_file_name.split(".")[0] + "-temp-copy.jack"
             
+            os.system(f"cp {jack_file_name} {jack_file_name_copy}")
+
             vm_code = JackTranslatorLibrary.translate_file(jack_file_name)
             
+            os.system(f"rm {jack_file_name_copy}")
+
             with open(output_file_name, 'w') as output_file:
                 for line in vm_code:
                     output_file.write(line)
