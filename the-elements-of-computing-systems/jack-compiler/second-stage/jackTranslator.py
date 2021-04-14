@@ -9,17 +9,31 @@ import sys
 
 class JackTranslator:
     """
-    Main class, capable of processing a full directory, with .jack files, resutling in corresponding .vm files files
+    Main class, capable of processing a full directory, with .jack files, resulting in corresponding .vm files files
     """
 
-    def translate(path, add_standard_library):
-        """
-        Translate a directory, resulting in len(path .jack files) .vm files
-        """
 
-        #TODO: write code :D
+    def translate(path):
+        """
+        Translate a directory, .jack -> .vm
+        """
+        
+        jack_files = []
 
-        return 0
+        for root, dirs, files in os.walk(path):
+            for file_name in files:
+                if ".jack" in file_name:
+                  jack_files.append(file_name)
+        
+        for jack_file_name in jack_files:
+            output_file_name = jack_file_name.split(".")[0] + ".vm"
+            
+            vm_code = JackTranslatorLibrary.translate_file(jack_file_name)
+
+            with open(output_file_name, 'w') as output_file:
+                for line in vm_code:
+                    output_file.write(line)
+
 
     def _construct_xml(input_file_name):
         """
@@ -35,3 +49,6 @@ class JackTranslator:
         JackTranslatorLibrary.parse_file(output_file_name)
 
         JackTranslatorLibrary.tabularize(output_file_name)
+
+
+JackTranslator.translate(sys.argv[1])
