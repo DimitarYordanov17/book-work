@@ -27,10 +27,15 @@ class JackTranslatorLibrary:
 
     def translate_file(input_file_name):
         """
-        Generate the corresponding VM code for Jack file translation
+        Clean the input file and take care off operating the code generation part 
         """
+                
+        JackTranslatorLibrary.clean(input_file_name)
 
-        return 0
+        jack_translator = JackTranslatorLibraryCodeGenerator(input_file_name)
+        jack_translator.translate()
+
+        return jack_translator.vm_code
 
 
     def parse_file(input_file_name):
@@ -193,6 +198,39 @@ class JackTranslatorLibrary:
                 break
 
         return string_to_write, enter_block_comment
+
+
+class JackTranslatorLibraryCodeGenerator:
+    """
+    Responsible for the VM code generation of Jack commands and other auxiliary functions (such as building symbolic table)
+    """
+
+    def __init__(self, input_file_name):
+        self.input_commands = open(input_file_name, 'r').readlines()
+        self.symbolic_table = []
+        self.vm_code = []
+
+    def translate(self):
+        """
+        Generate symbolic table and parse input_commands
+        """
+
+        JackTranslatorLibraryCodeGenerator._generate_symbolic_table()
+        JackTranslatorLibraryCodeGenerator._parse_commands()
+
+    def _generate_symbolic_table(self):
+        """
+        Build up symbolic table to handle identifiers type and scope problems
+        """
+
+        return 0
+
+   def _parse_commands(self):
+        """
+        Parse Jack commands and write the VM corresponding codes into current instance vm_code
+        """
+
+        return 0
 
 
 class JackTranslatorLibraryParser:
