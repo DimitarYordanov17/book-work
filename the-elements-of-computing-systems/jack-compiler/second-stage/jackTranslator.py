@@ -41,6 +41,8 @@ class JackTranslator:
             
             if not generate_xml:
                 os.system(f"rm {jack_xml_file_name}")
+            
+            JackTranslatorLibrary.tabularize(jack_xml_file_name)
 
             with open(output_file_name, 'w') as output_file:
                 for line in vm_code:
