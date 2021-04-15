@@ -228,6 +228,8 @@ class JackTranslatorLibraryCodeGenerator:
         JackTranslatorLibraryCodeGenerator._get_class_info(self)        
         JackTranslatorLibraryCodeGenerator._get_subroutines(self)
         
+        print(self.subroutines, self.class_info)
+
         #for subroutine_name in self.subroutines.keys():
         #    symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(subroutine_name)
         #    self.subroutines[subroutine_name].append(symbolic_table)
@@ -242,11 +244,9 @@ class JackTranslatorLibraryCodeGenerator:
         Find all name and declaration for subroutines and add them to self.subroutines
         """
         
-        subroutine_declarations_starts = JackTranslatorLibraryCodeGenerator._get_all_occurrences(self.input_commands, "<subroutineDec>")
-        subroutine_declarations_ends = JackTranslatorLibraryCodeGenerator._get_all_occurrences(self.input_commands, "</subroutineDec>")
+        subroutine_declarations = JackTranslatorLibraryCodeGenerator._get_tag_body(self, "<subroutineDec>")
 
-        for starting_index, ending_index in zip(subroutine_declarations_starts, subroutine_declarations_ends):
-            subroutine_declaration = self.input_commands[starting_index + 1:ending_index - 1]
+        for subroutine_declaration in subroutine_declarations:
             subroutine_name = JackTranslatorLibraryParser._get_token_value(self, subroutine_declaration[2])
 
             self.subroutines[subroutine_name] = subroutine_declaration
@@ -261,11 +261,9 @@ class JackTranslatorLibraryCodeGenerator:
         
         class_symbolic_table = {}
 
-        class_variable_declarations_starts = JackTranslatorLibraryCodeGenerator._get_all_occurrences(self.input_commands, "<classVarDec>")
-        class_variable_declarations_ends = JackTranslatorLibraryCodeGenerator._get_all_occurrences(self.input_commands, "</classVarDec>")
+        variable_declarations = JackTranslatorLibraryCodeGenerator._get_tag_body(self, "<classVarDec>")
 
-        for starting_index, ending_index in zip(class_variable_declarations_starts, class_variable_declarations_ends):
-            variable_declaration = self.input_commands[starting_index + 1:ending_index - 1]
+        for variable_declaration in variable_declarations:
             variable_declaration = [JackTranslatorLibraryParser._get_token_value(self, tag) for tag in variable_declaration]
 
             variable_type = variable_declaration[0]
@@ -278,6 +276,24 @@ class JackTranslatorLibraryCodeGenerator:
                 class_symbolic_table[variable_name] = [variable_type, variable_kind, count]
         
         self.class_info = [class_name, class_symbolic_table]
+
+
+    def _get_tag_body(self, tag):
+        """
+        Return all the statements (tags) between an opening and closing tag (the argument)
+        """
+
+        starting_indices = JackTranslatorLibraryCodeGenerator._get_all_occurrences(self.input_commands, tag)
+        ending_indices = JackTranslatorLibraryCodeGenerator._get_all_occurrences(self.input_commands, JackTranslatorLibraryParser._get_closed_tag(self, tag))
+
+        declarations = []
+
+        for starting_index, ending_index in zip(starting_indices, ending_indices):
+            declaration = self.input_commands[starting_index + 1: ending_index - 1]
+
+            declarations.append(declaration)
+
+        return declarations
 
 
     def _generate_symbolic_table(self, subroutine_name):
