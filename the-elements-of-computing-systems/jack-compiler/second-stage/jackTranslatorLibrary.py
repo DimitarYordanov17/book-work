@@ -1,6 +1,8 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
 # TODO: Check if the bool or boolean is the correct keyword, in the documentation.
+# TODO: Fix class constructor name bug
+
 import re
 
 class JackTranslatorLibrary:
@@ -14,6 +16,8 @@ class JackTranslatorLibrary:
         "symbols": ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~'],
 
         "subroutines": ['constructor', 'function', 'method'],
+        
+        "primitive_types": ['var', 'static', 'field'],
 
         "statements": ['let', 'if', 'while', 'do', 'return'],
 
@@ -229,9 +233,9 @@ class JackTranslatorLibraryCodeGenerator:
         JackTranslatorLibraryCodeGenerator._get_class_info(self)        
         JackTranslatorLibraryCodeGenerator._get_subroutines(self)
 
-        for subroutine_name in self.subroutines.keys():
+        for subroutine_name in list(self.subroutines.keys())[1:]:
             symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(self, subroutine_name)
-            #self.subroutines[subroutine_name].append(symbolic_table)
+            self.subroutines[subroutine_name].append(symbolic_table)
         
         #for subroutine_name in self.subroutines.keys():
         #    subroutine_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine(subroutine_name)
@@ -277,19 +281,22 @@ class JackTranslatorLibraryCodeGenerator:
         self.class_info = [class_name, class_symbolic_table]
 
 
-    def _get_tag_body(self, tag):
+    def _get_tag_body(self, tag, gap=1, field_to_search="input_commands"):
         """
-        Return all the statements (tags) between an opening and closing tag (the argument)
+        Return all the statements (tags) between an opening and closing tag (the argument) in a given field (the default being self.input_commands), for every tag combination.
+        Gap is used for the cleaning of e.g. statement ending semicolons
         """
 
-        starting_indices = JackTranslatorLibraryCodeGenerator._get_all_occurrences(self.input_commands, tag)
-        ending_indices = JackTranslatorLibraryCodeGenerator._get_all_occurrences(self.input_commands, JackTranslatorLibraryParser._get_closed_tag(self, tag))
+        if field_to_search == "input_commands":
+            field_to_search = self.input_commands
+
+        starting_indices = JackTranslatorLibraryCodeGenerator._get_all_occurrences(field_to_search, tag)
+        ending_indices = JackTranslatorLibraryCodeGenerator._get_all_occurrences(field_to_search, JackTranslatorLibraryParser._get_closed_tag(self, tag))
 
         declarations = []
 
         for starting_index, ending_index in zip(starting_indices, ending_indices):
-            declaration = self.input_commands[starting_index + 1: ending_index - 1]
-
+            declaration = field_to_search[starting_index + 1: ending_index - gap] 
             declarations.append(declaration)
 
         return declarations
@@ -301,20 +308,39 @@ class JackTranslatorLibraryCodeGenerator:
         """
 
         subroutine_declaration = self.subroutines[subroutine_name]
-        identifiers = dict()
+        symbolic_table = dict()
 
-        for index, tag in enumerate(subroutine_declaration): 
-            tag_type = tag.split()[0]
+        # Parse arguments variables
+        parameter_list = JackTranslatorLibraryCodeGenerator._get_tag_body(self, "<parameterList>", gap=0, field_to_search=subroutine_declaration)
 
-            if tag_type == "<identifier>":
-                identifier_name  = JackTranslatorLibraryParser._get_token_value(self, tag)
-                
-                next_tag_type = subroutine_declaration[index + 1].split()[0]
+        if parameter_list:
+            parameter_list = parameter_list[0] # There is only one parameterList tags pair
 
-                if (identifier_name not in identifiers) and (next_tag_type != "<identifier>") and index != 2:
-                    identifiers[identifier_name] = index
+            parameter_variables = list(filter(lambda symbol: symbol != "<symbol> , </symbol>", parameter_list))
 
-        # TODO: Write code for the symbolic table generation
+            parameter_variables = [[parameter_variables[index], parameter_variables[index + 1]] for index in range(0, len(parameter_variables), 2)]
+            # /\ Transforms [type, identifier, ',', type, identifier...] into [[type, identifier], [type, identifier]...] /\
+
+            for count, var_pair in enumerate(parameter_variables):
+                var_type, var_name = var_pair[0], var_pair[1]
+                symbolic_table[JackTranslatorLibraryParser._get_token_value(self, var_name)] = [JackTranslatorLibraryParser._get_token_value(self, var_type), "argument", count]
+
+
+        # Subroutine body variables
+        variable_declarations = JackTranslatorLibraryCodeGenerator._get_tag_body(self, "<varDec>", field_to_search=subroutine_declaration)
+
+        for variable_declaration in variable_declarations:
+            variable_declaration = [JackTranslatorLibraryParser._get_token_value(self, tag) for tag in variable_declaration]
+
+            variable_type = variable_declaration[0]
+            variable_kind = variable_declaration[1]
+
+            variable_names = [name for name in variable_declaration[2:] if name != ',']
+
+            for count, variable_name in enumerate(variable_names):
+                symbolic_table[variable_name] = ["local" if variable_type == "var" else variable_type, variable_kind, count]
+        
+        return symbolic_table
 
 
     def _translate_subroutine(self, subroutine_name):
