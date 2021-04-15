@@ -227,8 +227,6 @@ class JackTranslatorLibraryCodeGenerator:
         JackTranslatorLibraryCodeGenerator._strip_input_commands(self)
         JackTranslatorLibraryCodeGenerator._get_class_info(self)        
         JackTranslatorLibraryCodeGenerator._get_subroutines(self)
-        
-        print(self.subroutines, self.class_info)
 
         #for subroutine_name in self.subroutines.keys():
         #    symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(subroutine_name)
