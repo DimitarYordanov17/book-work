@@ -225,12 +225,9 @@ class JackTranslatorLibraryCodeGenerator:
         """
         
         JackTranslatorLibraryCodeGenerator._strip_input_commands(self)
-        JackTranslatorLibraryCodeGenerator._get_class_info(self)
+        JackTranslatorLibraryCodeGenerator._get_class_info(self)        
+        JackTranslatorLibraryCodeGenerator._get_subroutines(self)
         
-        print(self.class_info)
-
-        #JackTranslatorLibraryCodeGenerator._get_subroutines(self)
-
         #for subroutine_name in self.subroutines.keys():
         #    symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(subroutine_name)
         #    self.subroutines[subroutine_name].append(symbolic_table)
@@ -242,12 +239,19 @@ class JackTranslatorLibraryCodeGenerator:
 
     def _get_subroutines(self):
         """
-        Find all code subroutines and add them to self.subroutines
+        Find all name and declaration for subroutines and add them to self.subroutines
         """
+        
+        subroutine_declarations_starts = JackTranslatorLibraryCodeGenerator._get_all_occurrences(self.input_commands, "<subroutineDec>")
+        subroutine_declarations_ends = JackTranslatorLibraryCodeGenerator._get_all_occurrences(self.input_commands, "</subroutineDec>")
 
-        return 0
-    
-    
+        for starting_index, ending_index in zip(subroutine_declarations_starts, subroutine_declarations_ends):
+            subroutine_declaration = self.input_commands[starting_index + 1:ending_index - 1]
+            subroutine_name = JackTranslatorLibraryParser._get_token_value(self, subroutine_declaration[2])
+
+            self.subroutines[subroutine_name] = subroutine_declaration
+
+
     def _get_class_info(self):
         """
         Get class name and generate class symbolic table, which are going to be used in translation later
