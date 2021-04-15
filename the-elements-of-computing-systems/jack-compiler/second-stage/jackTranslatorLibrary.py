@@ -1,5 +1,6 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
+# TODO: Check if the bool or boolean is the correct keyword, in the documentation.
 import re
 
 class JackTranslatorLibrary:
@@ -228,9 +229,9 @@ class JackTranslatorLibraryCodeGenerator:
         JackTranslatorLibraryCodeGenerator._get_class_info(self)        
         JackTranslatorLibraryCodeGenerator._get_subroutines(self)
 
-        #for subroutine_name in self.subroutines.keys():
-        #    symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(subroutine_name)
-        #    self.subroutines[subroutine_name].append(symbolic_table)
+        for subroutine_name in self.subroutines.keys():
+            symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(self, subroutine_name)
+            #self.subroutines[subroutine_name].append(symbolic_table)
         
         #for subroutine_name in self.subroutines.keys():
         #    subroutine_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine(subroutine_name)
@@ -296,10 +297,24 @@ class JackTranslatorLibraryCodeGenerator:
 
     def _generate_symbolic_table(self, subroutine_name):
         """
-        Build up symbolic table to handle identifiers type and scope problems
+        Build up symbolic table for subroutine delcarations to handle identifiers type and scope problems
         """
-        
-        return 0
+
+        subroutine_declaration = self.subroutines[subroutine_name]
+        identifiers = dict()
+
+        for index, tag in enumerate(subroutine_declaration): 
+            tag_type = tag.split()[0]
+
+            if tag_type == "<identifier>":
+                identifier_name  = JackTranslatorLibraryParser._get_token_value(self, tag)
+                
+                next_tag_type = subroutine_declaration[index + 1].split()[0]
+
+                if (identifier_name not in identifiers) and (next_tag_type != "<identifier>") and index != 2:
+                    identifiers[identifier_name] = index
+
+        # TODO: Write code for the symbolic table generation
 
 
     def _translate_subroutine(self, subroutine_name):
