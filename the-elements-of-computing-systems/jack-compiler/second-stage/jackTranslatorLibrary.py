@@ -1,6 +1,5 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
-# TODO: Fix class constructor name bug
 
 import re
 
@@ -232,10 +231,10 @@ class JackTranslatorLibraryCodeGenerator:
         JackTranslatorLibraryCodeGenerator._get_class_info(self)        
         JackTranslatorLibraryCodeGenerator._get_subroutines(self)
 
-        for subroutine_name in list(self.subroutines.keys())[1:]:
+        for subroutine_name in self.subroutines.keys():
             symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(self, subroutine_name)
             self.subroutines[subroutine_name].append(symbolic_table)
-        
+
         #for subroutine_name in self.subroutines.keys():
         #    subroutine_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine(subroutine_name)
         #    self.subroutines[subroutine_name].append(subroutine_vm_code)
@@ -251,7 +250,7 @@ class JackTranslatorLibraryCodeGenerator:
         for subroutine_declaration in subroutine_declarations:
             subroutine_name = JackTranslatorLibraryParser._get_token_value(self, subroutine_declaration[2])
 
-            self.subroutines[subroutine_name] = subroutine_declaration
+            self.subroutines[subroutine_name] = [subroutine_declaration]
 
 
     def _get_class_info(self):
@@ -306,7 +305,7 @@ class JackTranslatorLibraryCodeGenerator:
         Build up symbolic table for subroutine delcarations to handle identifiers type and scope problems
         """
 
-        subroutine_declaration = self.subroutines[subroutine_name]
+        subroutine_declaration = self.subroutines[subroutine_name][0]
         symbolic_table = dict()
 
         # Parse arguments variables
