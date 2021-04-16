@@ -1,5 +1,6 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
+# TODO: I am pretty sleepy and I have no idea why is the calling of _translate_subroutine at 240th line is not working. For now I will leave it like this because I won't be able to test good, and will worry about invocating it tommorow
 
 import re
 
@@ -234,7 +235,10 @@ class JackTranslatorLibraryCodeGenerator:
         for subroutine_name in self.subroutines.keys():
             symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(self, subroutine_name)
             self.subroutines[subroutine_name].append(symbolic_table)
-
+        
+        print(list(self.subroutines.keys())[1])
+        asd = JackTranslatorLibraryCodeGenerator._translate_subroutine(self, list(self.subroutines.keys())[1])
+        print("test")
         #for subroutine_name in self.subroutines.keys():
         #    subroutine_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine(subroutine_name)
         #    self.subroutines[subroutine_name].append(subroutine_vm_code)
@@ -251,6 +255,28 @@ class JackTranslatorLibraryCodeGenerator:
             subroutine_name = JackTranslatorLibraryParser._get_token_value(self, subroutine_declaration[2])
 
             self.subroutines[subroutine_name] = [subroutine_declaration]
+
+    def _translate_subroutine(self, subroutine_name):
+        """
+        Return the vm code for a subroutine
+        """
+        
+        print("dsa")
+        subroutine_declaration = self.subroutines[subroutine_name][0]
+        subroutine_symbolic_table = self.subroutines[subroutine_name][1]
+        class_name = self.class_info[0]
+
+        subroutine_vm_code = []
+
+        # Translate meta information
+        subroutine_title = f"function {class_name}.{subroutine_name}"
+        subroutine_type = JackTranslatorLibraryParser._get_token_value(subroutine_declaration[0])
+
+        print(subroutine_type, "dsa")
+
+        # Translate statements
+        subroutine_statements = []
+
 
 
     def _get_class_info(self):
