@@ -1,6 +1,5 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
-# TODO: Check if the bool or boolean is the correct keyword, in the documentation.
 # TODO: Fix class constructor name bug
 
 import re
