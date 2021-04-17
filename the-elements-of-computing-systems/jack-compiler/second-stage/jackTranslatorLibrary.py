@@ -35,9 +35,9 @@ class JackTranslatorLibrary:
         """
                 
         jack_translator = JackTranslatorLibraryCodeGenerator(input_file_name)
-        jack_translator.translate()
+        vm_code = jack_translator.translate()
 
-        return jack_translator.vm_code
+        return vm_code
 
 
     def parse_file(input_file_name):
@@ -241,6 +241,14 @@ class JackTranslatorLibraryCodeGenerator:
             subroutine_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine(self, subroutine_name)
             self.subroutines[subroutine_name].append(subroutine_vm_code)
 
+        vm_code = []
+
+        for subroutine_declaration, subroutine_symbolic_table, subroutine_vm_code in self.subroutines.values():
+            indented_vm_code = [vm_command + '\n' for vm_command in subroutine_vm_code]
+            vm_code.extend(indented_vm_code)
+
+        return vm_code
+
         # \/ Print subroutines for testing \/
         #for subroutine_name, properties in self.subroutines.items():
         #    print(f"{subroutine_name}:\n{properties[1]}\n{properties[2]}\n")
@@ -272,7 +280,6 @@ class JackTranslatorLibraryCodeGenerator:
             class_variables = [x for y in list(self.class_info[1].values()) for x in y].count("field")
             subroutine_vm_code.extend([f"push constant {class_variables}", "call Memory.alloc", "pop pointer 0"])
 
-        # TODO: Translate statements
         subroutine_body = subroutine_declaration[subroutine_declaration.index("<statements>"):JackTranslatorLibraryCodeGenerator._get_all_occurrences(subroutine_declaration, "</statements>")[-1]] 
         statements_vm_code = JackTranslatorLibraryCodeGenerator._translate_statements(self, subroutine_body, subroutine_name)
         subroutine_vm_code.extend(statements_vm_code)
@@ -308,20 +315,20 @@ class JackTranslatorLibraryCodeGenerator:
             statement_type = statement_declaration[0][1:-1]
             statement_vm_code = []
 
-            statement_declaration = [JackTranslatorLibraryParser._get_token_value(self, tag) for tag in statement_declaration]
+            #statement_declaration = [JackTranslatorLibraryParser._get_token_value(self, tag) for tag in statement_declaration]
 
             if statement_type == "letStatement":
                 # Translate let statement
-                identifier = JackTranslatorLibraryCodeGenerator._get_identifier(self, statement_declaration[2], subroutine_name)
-                # TODO: Figure out the correct vm representation of the identifier
-
+                identifier = JackTranslatorLibraryParser._get_token_value(self, statement_declaration[2])
+                identifier = JackTranslatorLibraryCodeGenerator._get_identifier(self, identifier, subroutine_name)
+                
                 # Translate expression
                 expression = statement_declaration[statement_declaration.index("<expression>") + 1:JackTranslatorLibraryCodeGenerator._get_all_occurrences(statement_declaration, "</expression>")[-1]] 
                 expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
 
                 # Add expression calculation code, pop into identifier 
                 statement_vm_code = expression_vm_code
-                statement_vm_code.append(f"pop {identifier_vm}")
+                statement_vm_code.append(f"pop {identifier}")
 
             elif statement_type == "ifStatement":
                 # Translate if statement
@@ -351,10 +358,10 @@ class JackTranslatorLibraryCodeGenerator:
         for index, tag in enumerate(expression_declaration):
             term_body.append(tag)
 
-            if "<" in tag and "/" not in tag:
+            if " " not in tag and "/" not in tag:
                 term_stack.append(tag)
 
-            elif "<" in tag and "/" in tag:
+            elif " " not in tag and "/" in tag:
                 if len(term_stack) == 1:
                     break
                 term_stack.pop()
@@ -364,40 +371,69 @@ class JackTranslatorLibraryCodeGenerator:
         term_vm = JackTranslatorLibraryCodeGenerator._translate_term(self, term_body, subroutine_name)
 
         try:
-            operation = expression_declaration[last_index + 2]
+            operation = JackTranslatorLibraryParser._get_token_value(self, expression_declaration[last_index + 2])
         except:
             return term_vm
 
-        inner_expression = expression_declaration[last_index + 3:-1]
-        print(subroutine_name, inner_expression)
+        inner_expression = expression_declaration[last_index + 4:-1]
 
         expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, inner_expression, subroutine_name)
 
         operation_vm = [JackTranslatorLibraryCodeGenerator.OPERATIONS[operation]]
 
         expression_final_code = term_vm + expression_vm_code + operation_vm
+
         return expression_final_code
 
-    def _translate_term(self, term, subroutine_name):
+    def _translate_term(self, term_body, subroutine_name):
         """
         The same idea as expression translating but differentiation because of term types
         """
 
-        # TODO: Write code
+        term_vm = []
 
-        return 0
+        term_body = term_body[1:-1]
+
+        print(term_body)
+
+        if len(term_body) == 1: # integerConstant, stringConstant, keywordConstant, varName
+            term_type = term_body[0].split()[0][1:-1]
+            identifier = JackTranslatorLibraryParser._get_token_value(self, term_body[0])
+
+            if term_type == "identifier":
+                term_vm.append(f"push {JackTranslatorLibraryCodeGenerator._get_identifier(self, identifier, subroutine_name)}")
+            else:
+                term_vm.append(f"push {identifier}")
+
+        return term_vm
 
     def _get_identifier(self, identifier, subroutine_name):
         """
         Return the correct identifier properties, handle scoping
         """
+        identifier_vm = "" # TODO: add vm code representation of the 3 propeerty
 
         try: # Search for the identifier declaration in current scope
             identifier = self.subroutines[subroutine_name][1][identifier]
         except KeyError: # Search in global scope
             identifier = self.class_info[1][identifier]
 
-        return identifier
+        identifier_type, identifier_kind, identifier_count = identifier[0], identifier[1], identifier[2]
+
+        if identifier_kind == "var":
+
+            identifier_vm = f"local {identifier_count}"
+
+        elif identifier_kind == "field":
+            identifier_vm = f"this {identifier_count}"
+
+        elif identifier_kind == "static":
+            identifier_vm = f"static {identifier_count}"
+
+        elif identifier_kind == "argument":
+            identifier_vm = f"argument {identifier_count}"
+
+        return identifier_vm
 
     def _get_subroutines(self):
         """
