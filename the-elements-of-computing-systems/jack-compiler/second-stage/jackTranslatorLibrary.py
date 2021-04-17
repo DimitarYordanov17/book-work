@@ -272,10 +272,19 @@ class JackTranslatorLibraryCodeGenerator:
             subroutine_vm_code.extend([f"push constant {class_variables}", "call Memory.alloc", "pop pointer 0"])
 
         # TODO: Translate statements
-        subroutine_statements = []
+        subroutine_body = subroutine_declaration[subroutine_declaration.index("<statements>") + 1:JackTranslatorLibraryCodeGenerator._get_all_occurrences(subroutine_declaration, "</statements>")[-1] - 1] 
+        statements_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine_body(self, subroutine_body)
+        subroutine_vm_code.extend(statements_vm_code)
 
         return subroutine_vm_code
 
+
+    def _translate_subroutine_body(self, subroutine_body):
+        """
+        Return the vm code for every statement in a subroutine body
+        """
+
+        return 0
 
     def _get_subroutines(self):
         """
