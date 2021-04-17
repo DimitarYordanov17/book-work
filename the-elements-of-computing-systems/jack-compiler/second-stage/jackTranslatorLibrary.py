@@ -269,14 +269,17 @@ class JackTranslatorLibraryCodeGenerator:
 
         # Translate meta information
         subroutine_title = f"function {class_name}.{subroutine_name}"
-        subroutine_type = JackTranslatorLibraryParser._get_token_value(self, subroutine_declaration[0])
+        subroutine_kind = JackTranslatorLibraryParser._get_token_value(self, subroutine_declaration[0])
         arguments_count = [x for y in list(subroutine_symbolic_table.values()) for x in y].count("argument")
 
         subroutine_declaration_title = subroutine_title + f" {arguments_count}"
         subroutine_vm_code.append(subroutine_declaration_title)
 
         # TODO: Add this parsing when subroutine_type is method
+        if subroutine_kind == "method":
+            subroutine_vm_code.extend(["push argument 0", "pop pointer 0"])
         
+        print(subroutine_vm_code)
         # TODO: Translate statements
         subroutine_statements = []
 
@@ -385,7 +388,7 @@ class JackTranslatorLibraryCodeGenerator:
             variable_names = [name for name in variable_declaration[2:] if name != ',']
 
             for variable_name in variable_names:
-                symbolic_table[variable_name] = [variable_type, "local" if variable_kind == "var" else variable_kind, count]
+                symbolic_table[variable_name] = [variable_type, variable_kind, count]
                 count += 1
 
         return symbolic_table
