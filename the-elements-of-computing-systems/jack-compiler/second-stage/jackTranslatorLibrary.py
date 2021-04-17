@@ -232,6 +232,8 @@ class JackTranslatorLibraryCodeGenerator:
         JackTranslatorLibraryCodeGenerator._get_class_info(self)        
         JackTranslatorLibraryCodeGenerator._get_subroutines(self)
 
+        print(self.class_info)
+
         for subroutine_name in self.subroutines.keys():
             symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(self, subroutine_name)
             self.subroutines[subroutine_name].append(symbolic_table)
@@ -273,13 +275,13 @@ class JackTranslatorLibraryCodeGenerator:
 
         # TODO: Translate statements
         subroutine_body = subroutine_declaration[subroutine_declaration.index("<statements>"):JackTranslatorLibraryCodeGenerator._get_all_occurrences(subroutine_declaration, "</statements>")[-1]] 
-        statements_vm_code = JackTranslatorLibraryCodeGenerator._translate_statements(self, subroutine_body)
+        statements_vm_code = JackTranslatorLibraryCodeGenerator._translate_statements(self, subroutine_body, subroutine_name)
         subroutine_vm_code.extend(statements_vm_code)
 
         return subroutine_vm_code
 
 
-    def _translate_statements(self, statement_declarations):
+    def _translate_statements(self, statement_declarations, subroutine_name):
         """
         Return the vm code for every statement in a subroutine body
         """
@@ -307,9 +309,19 @@ class JackTranslatorLibraryCodeGenerator:
             statement_type = statement_declaration[0][1:-1]
             statement_vm_code = []
 
+            statement_declaration = [JackTranslatorLibraryParser._get_token_value(self, tag) for tag in statement_declaration]
+
             if statement_type == "letStatement":
                 # Translate let statement
-                pass
+                identifier = statement_declaration[2]
+                
+                try:
+                    identifier_vm = self.subroutines[subroutine_name][1][identifier]
+                except KeyError:
+                    identifier_vm = self.class_info[1][identifier]
+
+                print(identifier_vm)
+
             elif statement_type == "ifStatement":
                 # Translate if statement
                 pass
@@ -367,9 +379,10 @@ class JackTranslatorLibraryCodeGenerator:
 
             for variable_name in variable_names:
                 class_symbolic_table[variable_name] = [variable_type, variable_kind, count]
-            
+                count += 1
+                
             last_kind = variable_kind
-            count += 1
+            
 
         self.class_info = [class_name, class_symbolic_table]
 
