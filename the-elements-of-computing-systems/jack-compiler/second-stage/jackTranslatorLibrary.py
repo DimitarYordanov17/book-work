@@ -2,6 +2,8 @@
 
 # Keep in mind var/local difference when building symbolic table
 
+# TODO: Implement rest statement and term translations, might check tests
+
 import re
 
 class JackTranslatorLibrary:
@@ -393,8 +395,6 @@ class JackTranslatorLibraryCodeGenerator:
         term_vm = []
 
         term_body = term_body[1:-1]
-
-        print(term_body)
 
         if len(term_body) == 1: # integerConstant, stringConstant, keywordConstant, varName
             term_type = term_body[0].split()[0][1:-1]
