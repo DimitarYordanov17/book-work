@@ -411,7 +411,6 @@ class JackTranslatorLibraryCodeGenerator:
         """
         Return the correct identifier properties, handle scoping
         """
-        identifier_vm = "" # TODO: add vm code representation of the 3 propeerty
 
         try: # Search for the identifier declaration in current scope
             identifier = self.subroutines[subroutine_name][1][identifier]
@@ -420,19 +419,8 @@ class JackTranslatorLibraryCodeGenerator:
 
         identifier_type, identifier_kind, identifier_count = identifier[0], identifier[1], identifier[2]
 
-        if identifier_kind == "var":
-
-            identifier_vm = f"local {identifier_count}"
-
-        elif identifier_kind == "field":
-            identifier_vm = f"this {identifier_count}"
-
-        elif identifier_kind == "static":
-            identifier_vm = f"static {identifier_count}"
-
-        elif identifier_kind == "argument":
-            identifier_vm = f"argument {identifier_count}"
-
+        identifier_vm = f'{"local" if identifier_kind[1] == "var" else identifier_kind[1]} {identifier[2]}'
+        
         return identifier_vm
 
     def _get_subroutines(self):
