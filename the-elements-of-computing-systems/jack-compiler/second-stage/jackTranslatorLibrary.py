@@ -1,5 +1,6 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
+# Keep in mind var/local difference when building symbolic table
 
 import re
 
@@ -220,7 +221,7 @@ class JackTranslatorLibraryCodeGenerator:
         self.vm_code = []
 
         self.subroutines = {}
-        self.class_info = {}
+        self.class_info = []
 
     def translate(self):
         """
@@ -292,18 +293,27 @@ class JackTranslatorLibraryCodeGenerator:
 
         variable_declarations = JackTranslatorLibraryCodeGenerator._get_tag_body(self, "<classVarDec>")
 
+        count = 0
+        last_kind = ""
+
         for variable_declaration in variable_declarations:
             variable_declaration = [JackTranslatorLibraryParser._get_token_value(self, tag) for tag in variable_declaration]
 
-            variable_type = variable_declaration[0]
-            variable_kind = variable_declaration[1]
-            count = 0
+            variable_kind = variable_declaration[0]
+
+            if variable_kind != last_kind:
+                count = 0
+
+            variable_type = variable_declaration[1]
 
             variable_names = [name for name in variable_declaration[2:] if name != ',']
 
             for variable_name in variable_names:
                 class_symbolic_table[variable_name] = [variable_type, variable_kind, count]
-        
+            
+            last_kind = variable_kind
+            count += 1
+
         self.class_info = [class_name, class_symbolic_table]
 
 
@@ -343,7 +353,7 @@ class JackTranslatorLibraryCodeGenerator:
 
         if subroutine_type == "method":
             subroutine_kind = JackTranslatorLibraryParser._get_token_value(self, subroutine_declaration[1])
-            symbolic_table["this"] = [subroutine_kind, "argument", 0]
+            symbolic_table["this"] = [self.class_info[0], "argument", 0]
 
         if parameter_list:
             parameter_list = parameter_list[0] # There is only one parameterList tags pair
@@ -364,17 +374,20 @@ class JackTranslatorLibraryCodeGenerator:
         # Subroutine body variables
         variable_declarations = JackTranslatorLibraryCodeGenerator._get_tag_body(self, "<varDec>", field_to_search=subroutine_declaration)
 
+        count = 0
+
         for variable_declaration in variable_declarations:
             variable_declaration = [JackTranslatorLibraryParser._get_token_value(self, tag) for tag in variable_declaration]
 
-            variable_type = variable_declaration[0]
-            variable_kind = variable_declaration[1]
+            variable_type = variable_declaration[1]
+            variable_kind = variable_declaration[0]
 
             variable_names = [name for name in variable_declaration[2:] if name != ',']
 
-            for count, variable_name in enumerate(variable_names):
-                symbolic_table[variable_name] = ["local" if variable_type == "var" else variable_type, variable_kind, count]
-        
+            for variable_name in variable_names:
+                symbolic_table[variable_name] = [variable_type, "local" if variable_kind == "var" else variable_kind, count]
+                count += 1
+
         return symbolic_table
 
     def _strip_input_commands(self):
