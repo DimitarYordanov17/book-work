@@ -1,6 +1,5 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
-# TODO: I am pretty sleepy and I have no idea why is the calling of _translate_subroutine at 240th line is not working. For now I will leave it like this because I won't be able to test good, and will worry about invocating it tommorow
 
 import re
 
@@ -236,9 +235,7 @@ class JackTranslatorLibraryCodeGenerator:
             symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(self, subroutine_name)
             self.subroutines[subroutine_name].append(symbolic_table)
         
-        print(list(self.subroutines.keys())[1])
-        asd = JackTranslatorLibraryCodeGenerator._translate_subroutine(self, list(self.subroutines.keys())[1])
-        print("test")
+        JackTranslatorLibraryCodeGenerator._translate_subroutine(self, list(self.subroutines.keys())[1])
         #for subroutine_name in self.subroutines.keys():
         #    subroutine_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine(subroutine_name)
         #    self.subroutines[subroutine_name].append(subroutine_vm_code)
@@ -261,7 +258,6 @@ class JackTranslatorLibraryCodeGenerator:
         Return the vm code for a subroutine
         """
         
-        print("dsa")
         subroutine_declaration = self.subroutines[subroutine_name][0]
         subroutine_symbolic_table = self.subroutines[subroutine_name][1]
         class_name = self.class_info[0]
@@ -270,9 +266,9 @@ class JackTranslatorLibraryCodeGenerator:
 
         # Translate meta information
         subroutine_title = f"function {class_name}.{subroutine_name}"
-        subroutine_type = JackTranslatorLibraryParser._get_token_value(subroutine_declaration[0])
+        subroutine_type = JackTranslatorLibraryParser._get_token_value(self, subroutine_declaration[0])
 
-        print(subroutine_type, "dsa")
+        # TODO: Add differentiation of subroutine_type
 
         # Translate statements
         subroutine_statements = []
@@ -365,14 +361,6 @@ class JackTranslatorLibraryCodeGenerator:
                 symbolic_table[variable_name] = ["local" if variable_type == "var" else variable_type, variable_kind, count]
         
         return symbolic_table
-
-
-    def _translate_subroutine(self, subroutine_name):
-        """
-        Parse Jack commands and write the VM corresponding codes into current instance vm_code
-        """
-
-        return 0
 
     def _strip_input_commands(self):
         """
