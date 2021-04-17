@@ -242,7 +242,7 @@ class JackTranslatorLibraryCodeGenerator:
 
         # \/ Print subroutines for testing \/
         #for subroutine_name, properties in self.subroutines.items():
-        #    print(f"{subroutine_name}:\n , {properties[1]}\n, {properties[2]}\n")
+        #    print(f"{subroutine_name}:\n{properties[1]}\n{properties[2]}\n")
 
     def _translate_subroutine(self, subroutine_name):
         """
@@ -272,19 +272,59 @@ class JackTranslatorLibraryCodeGenerator:
             subroutine_vm_code.extend([f"push constant {class_variables}", "call Memory.alloc", "pop pointer 0"])
 
         # TODO: Translate statements
-        subroutine_body = subroutine_declaration[subroutine_declaration.index("<statements>") + 1:JackTranslatorLibraryCodeGenerator._get_all_occurrences(subroutine_declaration, "</statements>")[-1] - 1] 
-        statements_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine_body(self, subroutine_body)
+        subroutine_body = subroutine_declaration[subroutine_declaration.index("<statements>"):JackTranslatorLibraryCodeGenerator._get_all_occurrences(subroutine_declaration, "</statements>")[-1]] 
+        statements_vm_code = JackTranslatorLibraryCodeGenerator._translate_statements(self, subroutine_body)
         subroutine_vm_code.extend(statements_vm_code)
 
         return subroutine_vm_code
 
 
-    def _translate_subroutine_body(self, subroutine_body):
+    def _translate_statements(self, statement_declarations):
         """
         Return the vm code for every statement in a subroutine body
         """
 
-        return 0
+        statements_vm_code = []
+
+        statements = []
+        current_statement = []
+        statement_stack = []
+
+        # Differentiate all statements (not recursively!)
+        for tag in statement_declarations[1:-1]:
+            current_statement.append(tag)
+            if "Statement" in tag and "/" not in tag:
+                statement_stack.append(tag)
+
+            elif "Statement" in tag and "/" in tag:
+                if len(statement_stack) == 1:
+                    statements.append(current_statement)
+                    current_statement = []
+                statement_stack.pop()
+
+        # Translate the differentiated statements
+        for statement_declaration in statements:
+            statement_type = statement_declaration[0][1:-1]
+            statement_vm_code = []
+
+            if statement_type == "letStatement":
+                # Translate let statement
+                pass
+            elif statement_type == "ifStatement":
+                # Translate if statement
+                pass
+            elif statement_type == "whileStatement":
+                # Translate while statement
+                pass
+            elif statement_type == "doStatement":
+                # ...
+                pass
+            elif statement_type == "ReturnStatement":
+                pass
+
+            statements_vm_code.extend(statement_vm_code)
+
+        return statements_vm_code
 
     def _get_subroutines(self):
         """
