@@ -235,7 +235,9 @@ class JackTranslatorLibraryCodeGenerator:
             symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(self, subroutine_name)
             self.subroutines[subroutine_name].append(symbolic_table)
         
-        JackTranslatorLibraryCodeGenerator._translate_subroutine(self, list(self.subroutines.keys())[1])
+        for subroutine_name in self.subroutines.keys():
+            JackTranslatorLibraryCodeGenerator._translate_subroutine(self, subroutine_name)
+
         #for subroutine_name in self.subroutines.keys():
         #    subroutine_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine(subroutine_name)
         #    self.subroutines[subroutine_name].append(subroutine_vm_code)
@@ -267,10 +269,14 @@ class JackTranslatorLibraryCodeGenerator:
         # Translate meta information
         subroutine_title = f"function {class_name}.{subroutine_name}"
         subroutine_type = JackTranslatorLibraryParser._get_token_value(self, subroutine_declaration[0])
+        arguments_count = [x for y in list(subroutine_symbolic_table.values()) for x in y].count("argument")
 
-        # TODO: Add differentiation of subroutine_type
+        subroutine_declaration_title = subroutine_title + f" {arguments_count}"
+        subroutine_vm_code.append(subroutine_declaration_title)
 
-        # Translate statements
+        # TODO: Add this parsing when subroutine_type is method
+        
+        # TODO: Translate statements
         subroutine_statements = []
 
 
@@ -333,6 +339,12 @@ class JackTranslatorLibraryCodeGenerator:
         # Parse arguments variables
         parameter_list = JackTranslatorLibraryCodeGenerator._get_tag_body(self, "<parameterList>", gap=0, field_to_search=subroutine_declaration)
 
+        subroutine_type = JackTranslatorLibraryParser._get_token_value(self, subroutine_declaration[0])
+
+        if subroutine_type == "method":
+            subroutine_kind = JackTranslatorLibraryParser._get_token_value(self, subroutine_declaration[1])
+            symbolic_table["this"] = [subroutine_kind, "argument", 0]
+
         if parameter_list:
             parameter_list = parameter_list[0] # There is only one parameterList tags pair
 
@@ -342,6 +354,9 @@ class JackTranslatorLibraryCodeGenerator:
             # /\ Transforms [type, identifier, ',', type, identifier...] into [[type, identifier], [type, identifier]...] /\
 
             for count, var_pair in enumerate(parameter_variables):
+                if subroutine_type == "method":
+                    count += 1
+
                 var_type, var_name = var_pair[0], var_pair[1]
                 symbolic_table[JackTranslatorLibraryParser._get_token_value(self, var_name)] = [JackTranslatorLibraryParser._get_token_value(self, var_type), "argument", count]
 
