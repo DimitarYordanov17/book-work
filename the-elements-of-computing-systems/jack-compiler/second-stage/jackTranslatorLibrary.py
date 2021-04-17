@@ -214,6 +214,7 @@ class JackTranslatorLibraryCodeGenerator:
     // subroutine and we translate it to VM code, using its own symbolic table. To translate the file means
     // to fill up instance's vm_code attribute
     """
+    OPERATIONS = {"+": "add", "-": "sub", "&": "and", "|": "or", "*": "call Math.multiply()", "/": "call Math.divide()"}
 
     def __init__(self, input_file_name):
         self.input_commands = open(input_file_name, 'r').readlines()
@@ -338,14 +339,53 @@ class JackTranslatorLibraryCodeGenerator:
 
         return statements_vm_code
 
-    def _translate_expression(self, expression, subroutine_name):
+    def _translate_expression(self, expression_declaration, subroutine_name):
         """
         Translate expression into vm code, recursively. Subroutine name is used for identifier scoping handling
         """
 
-        # TODO: Write the code
-        return 0
+        term_body = []
+        term_stack = []
+        last_index = 0
 
+        for index, tag in enumerate(expression_declaration):
+            term_body.append(tag)
+
+            if "<" in tag and "/" not in tag:
+                term_stack.append(tag)
+
+            elif "<" in tag and "/" in tag:
+                if len(term_stack) == 1:
+                    break
+                term_stack.pop()
+
+            last_index = index
+
+        term_vm = JackTranslatorLibraryCodeGenerator._translate_term(self, term_body, subroutine_name)
+
+        try:
+            operation = expression_declaration[last_index + 2]
+        except:
+            return term_vm
+
+        inner_expression = expression_declaration[last_index + 3:-1]
+        print(subroutine_name, inner_expression)
+
+        expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, inner_expression, subroutine_name)
+
+        operation_vm = [JackTranslatorLibraryCodeGenerator.OPERATIONS[operation]]
+
+        expression_final_code = term_vm + expression_vm_code + operation_vm
+        return expression_final_code
+
+    def _translate_term(self, term, subroutine_name):
+        """
+        The same idea as expression translating but differentiation because of term types
+        """
+
+        # TODO: Write code
+
+        return 0
 
     def _get_identifier(self, identifier, subroutine_name):
         """
