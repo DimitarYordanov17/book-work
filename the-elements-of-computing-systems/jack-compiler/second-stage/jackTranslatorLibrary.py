@@ -232,8 +232,6 @@ class JackTranslatorLibraryCodeGenerator:
         JackTranslatorLibraryCodeGenerator._get_class_info(self)        
         JackTranslatorLibraryCodeGenerator._get_subroutines(self)
 
-        print(self.class_info)
-
         for subroutine_name in self.subroutines.keys():
             symbolic_table = JackTranslatorLibraryCodeGenerator._generate_symbolic_table(self, subroutine_name)
             self.subroutines[subroutine_name].append(symbolic_table)
@@ -313,14 +311,16 @@ class JackTranslatorLibraryCodeGenerator:
 
             if statement_type == "letStatement":
                 # Translate let statement
-                identifier = statement_declaration[2]
-                
-                try:
-                    identifier_vm = self.subroutines[subroutine_name][1][identifier]
-                except KeyError:
-                    identifier_vm = self.class_info[1][identifier]
+                identifier = JackTranslatorLibraryCodeGenerator._get_identifier(self, statement_declaration[2], subroutine_name)
+                # TODO: Figure out the correct vm representation of the identifier
 
-                print(identifier_vm)
+                # Translate expression
+                expression = statement_declaration[statement_declaration.index("<expression>") + 1:JackTranslatorLibraryCodeGenerator._get_all_occurrences(statement_declaration, "</expression>")[-1]] 
+                expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
+
+                # Add expression calculation code, pop into identifier 
+                statement_vm_code = expression_vm_code
+                statement_vm_code.append(f"pop {identifier_vm}")
 
             elif statement_type == "ifStatement":
                 # Translate if statement
@@ -337,6 +337,27 @@ class JackTranslatorLibraryCodeGenerator:
             statements_vm_code.extend(statement_vm_code)
 
         return statements_vm_code
+
+    def _translate_expression(self, expression, subroutine_name):
+        """
+        Translate expression into vm code, recursively. Subroutine name is used for identifier scoping handling
+        """
+
+        # TODO: Write the code
+        return 0
+
+
+    def _get_identifier(self, identifier, subroutine_name):
+        """
+        Return the correct identifier properties, handle scoping
+        """
+
+        try: # Search for the identifier declaration in current scope
+            identifier = self.subroutines[subroutine_name][1][identifier]
+        except KeyError: # Search in global scope
+            identifier = self.class_info[1][identifier]
+
+        return identifier
 
     def _get_subroutines(self):
         """
@@ -380,7 +401,7 @@ class JackTranslatorLibraryCodeGenerator:
             for variable_name in variable_names:
                 class_symbolic_table[variable_name] = [variable_type, variable_kind, count]
                 count += 1
-                
+
             last_kind = variable_kind
             
 
