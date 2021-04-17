@@ -237,24 +237,12 @@ class JackTranslatorLibraryCodeGenerator:
             self.subroutines[subroutine_name].append(symbolic_table)
         
         for subroutine_name in self.subroutines.keys():
-            JackTranslatorLibraryCodeGenerator._translate_subroutine(self, subroutine_name)
+            subroutine_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine(self, subroutine_name)
+            self.subroutines[subroutine_name].append(subroutine_vm_code)
 
-        #for subroutine_name in self.subroutines.keys():
-        #    subroutine_vm_code = JackTranslatorLibraryCodeGenerator._translate_subroutine(subroutine_name)
-        #    self.subroutines[subroutine_name].append(subroutine_vm_code)
-
-
-    def _get_subroutines(self):
-        """
-        Find all name and declaration for subroutines and add them to self.subroutines
-        """
-        
-        subroutine_declarations = JackTranslatorLibraryCodeGenerator._get_tag_body(self, "<subroutineDec>")
-
-        for subroutine_declaration in subroutine_declarations:
-            subroutine_name = JackTranslatorLibraryParser._get_token_value(self, subroutine_declaration[2])
-
-            self.subroutines[subroutine_name] = [subroutine_declaration]
+        # \/ Print subroutines for testing \/
+        #for subroutine_name, properties in self.subroutines.items():
+        #    print(f"{subroutine_name}:\n , {properties[1]}\n, {properties[2]}\n")
 
     def _translate_subroutine(self, subroutine_name):
         """
@@ -275,14 +263,31 @@ class JackTranslatorLibraryCodeGenerator:
         subroutine_declaration_title = subroutine_title + f" {arguments_count}"
         subroutine_vm_code.append(subroutine_declaration_title)
 
-        # TODO: Add this parsing when subroutine_type is method
+        # Add translation bootstrap code (setting the "this" segment)
         if subroutine_kind == "method":
             subroutine_vm_code.extend(["push argument 0", "pop pointer 0"])
         
-        print(subroutine_vm_code)
+        elif subroutine_kind == "constructor":
+            class_variables = [x for y in list(self.class_info[1].values()) for x in y].count("field")
+            subroutine_vm_code.extend([f"push constant {class_variables}", "call Memory.alloc", "pop pointer 0"])
+
         # TODO: Translate statements
         subroutine_statements = []
 
+        return subroutine_vm_code
+
+
+    def _get_subroutines(self):
+        """
+        Find all name and declaration for subroutines and add them to self.subroutines
+        """
+        
+        subroutine_declarations = JackTranslatorLibraryCodeGenerator._get_tag_body(self, "<subroutineDec>")
+
+        for subroutine_declaration in subroutine_declarations:
+            subroutine_name = JackTranslatorLibraryParser._get_token_value(self, subroutine_declaration[2])
+
+            self.subroutines[subroutine_name] = [subroutine_declaration]
 
 
     def _get_class_info(self):
