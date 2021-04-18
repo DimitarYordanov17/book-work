@@ -37,13 +37,13 @@ class JackTranslator:
 
             JackTranslator._generate_xml(jack_full_file_name, tabularize=False)
 
-            vm_code = JackTranslatorLibrary.translate_file(jack_xml_file_name)
+            vm_code = JackTranslatorLibrary.translate_file(jack_xml_file_name) 
+           
+            JackTranslatorLibrary.tabularize(jack_xml_file_name)
             
             if not generate_xml:
                 os.system(f"rm {jack_xml_file_name}")
-            
-            JackTranslatorLibrary.tabularize(jack_xml_file_name)
-
+ 
             with open(output_file_name, 'w') as output_file:
                 for line in vm_code:
                     output_file.write(line)
