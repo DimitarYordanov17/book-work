@@ -322,10 +322,7 @@ class JackTranslatorLibraryCodeGenerator:
             if statement_type == "letStatement":
                 # Translate let statement
                 identifier = JackTranslatorLibraryParser._get_token_value(self, statement_declaration[2])
-                print(identifier)
                 identifier = JackTranslatorLibraryCodeGenerator._get_identifier(self, identifier, subroutine_name)
-                
-                print(identifier)
 
                 # Translate expression
                 expression = statement_declaration[statement_declaration.index("<expression>") + 1:JackTranslatorLibraryCodeGenerator._get_all_occurrences(statement_declaration, "</expression>")[-1]] 
