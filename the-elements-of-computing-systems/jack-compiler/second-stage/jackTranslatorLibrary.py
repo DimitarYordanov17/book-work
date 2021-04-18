@@ -322,8 +322,11 @@ class JackTranslatorLibraryCodeGenerator:
             if statement_type == "letStatement":
                 # Translate let statement
                 identifier = JackTranslatorLibraryParser._get_token_value(self, statement_declaration[2])
+                print(identifier)
                 identifier = JackTranslatorLibraryCodeGenerator._get_identifier(self, identifier, subroutine_name)
                 
+                print(identifier)
+
                 # Translate expression
                 expression = statement_declaration[statement_declaration.index("<expression>") + 1:JackTranslatorLibraryCodeGenerator._get_all_occurrences(statement_declaration, "</expression>")[-1]] 
                 expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
@@ -416,10 +419,11 @@ class JackTranslatorLibraryCodeGenerator:
             identifier = self.subroutines[subroutine_name][1][identifier]
         except KeyError: # Search in global scope
             identifier = self.class_info[1][identifier]
-
-        identifier_type, identifier_kind, identifier_count = identifier[0], identifier[1], identifier[2]
-
-        identifier_vm = f'{"local" if identifier_kind[1] == "var" else identifier_kind[1]} {identifier[2]}'
+        
+        # \/ Not sure if this differentiation is neccessary \/
+        #identifier_type, identifier_kind, identifier_count = identifier[0], identifier[1], identifier[2]
+        
+        identifier_vm = f'{"local" if identifier[1] == "var" else identifier[1]} {identifier[2]}'
         
         return identifier_vm
 
