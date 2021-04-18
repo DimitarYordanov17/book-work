@@ -3,6 +3,7 @@
 # Keep in mind var/local difference when building symbolic table
 
 # TODO: Implement rest statement and term translations, might check tests
+# TODO: Think about stringConstant possible bug when converting to xml
 
 import re
 
@@ -335,12 +336,15 @@ class JackTranslatorLibraryCodeGenerator:
             elif statement_type == "ifStatement":
                 # Translate if statement
                 pass
+
             elif statement_type == "whileStatement":
                 # Translate while statement
                 pass
+
             elif statement_type == "doStatement":
                 # ...
                 pass
+
             elif statement_type == "ReturnStatement":
                 pass
 
@@ -394,6 +398,9 @@ class JackTranslatorLibraryCodeGenerator:
 
         term_vm = []
 
+        # For testing
+        # return term_vm
+
         term_body = term_body[1:-1]
 
         if len(term_body) == 1: # integerConstant, stringConstant, keywordConstant, varName
@@ -404,6 +411,20 @@ class JackTranslatorLibraryCodeGenerator:
                 term_vm.append(f"push {JackTranslatorLibraryCodeGenerator._get_identifier(self, identifier, subroutine_name)}")
             else:
                 term_vm.append(f"push {identifier}")
+
+            return term_vm
+        
+        next_token = JackTranslatorLibraryParser._get_token_value(self, term_body[1])
+
+        if  next_token in [".", "("]: # Subroutine call 
+            pass
+
+        elif next_token == "[": # varName indexing
+            pass
+
+        elif JackTranslatorLibraryParser._get_token_value(self, term_body[0]) in JackTranslatorLibraryParser.SYNTAX_ELEMENTS["op"]: # unaryOp term
+            pass
+
 
         return term_vm
 
@@ -919,10 +940,9 @@ class JackTranslatorLibraryParser:
 
         current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
 
-        while current_token == ",":
+        if current_token == ",":
             self.row_pointer += 1
-            JackTranslatorLibraryParser._parse_expression(self)
-            current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
+            JackTranslatorLibraryParser._parse_expression_list(self)
 
         self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, tag))
         self.row_pointer += 1
