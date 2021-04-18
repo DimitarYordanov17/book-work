@@ -417,10 +417,15 @@ class JackTranslatorLibraryCodeGenerator:
         except KeyError: # Search in global scope
             identifier = self.class_info[1][identifier]
         
-        # \/ Not sure if this differentiation is neccessary \/
-        #identifier_type, identifier_kind, identifier_count = identifier[0], identifier[1], identifier[2]
+        identifier_type, identifier_kind, identifier_count = identifier[0], identifier[1], identifier[2]
+        identifier_segment = identifier_kind
         
-        identifier_vm = f'{"local" if identifier[1] == "var" else identifier[1]} {identifier[2]}'
+        if identifier_kind == "var":
+            identifier_segment = "local"
+        elif identifier_kind == "field":
+            identifier_segment = "this"
+
+        identifier_vm = f"{identifier_segment} {identifier_count}"
         
         return identifier_vm
 
