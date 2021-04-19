@@ -3,6 +3,7 @@
 # (More info about the parsing logic at line 197)
 
 import re
+import copy
 
 class JackTranslatorLibrary:
     """
@@ -52,21 +53,36 @@ class JackTranslatorLibrary:
             # Clean all \n
             file_text = file_text.replace("\n", " ")
 
-            # Wider all symbols
-            for symbol in JackTranslatorLibrary.SYNTAX_ELEMENTS["symbols"]:
-                widened_symbol = " " + symbol + " "
-                file_text = file_text.replace(symbol, widened_symbol)
+            # Clean spaces, without breaking the string
+            # BTW I spent too much time on this but in the end I see that
+            # I could use regex techniques for the entire compiler...
+            # If I find time to rework the whole thing, I might find a way
+            # to do it with regexes for optimization.
+            # All the added complexity is here just so I can parse strings the correct way.
 
-            # Clean all in-file spaces
-            while "  " in file_text:
-                file_text = file_text.replace("  ", " ")
+            strings = re.findall(r'"[^"]*"', file_text)
+            non_string_file_text = re.split(r'(?:"[^"]*")', file_text)
 
-            # Split into tokens
-            file_text = file_text.split()
+            refactored_text = []
+
+            for index, non_string in enumerate(non_string_file_text):
+                while "  " in non_string:
+                    non_string = non_string.replace("  ", " ")
+
+                for symbol in JackTranslatorLibrary.SYNTAX_ELEMENTS["symbols"]:
+                    widened_symbol = " " + symbol + " "
+                    non_string = non_string.replace(symbol, widened_symbol)
+
+                refactored_text.extend(non_string.split())
+
+                try:
+                    refactored_text.append(strings[index])
+                except:
+                    break
 
             input_file.seek(0)
 
-            for token in file_text:
+            for token in refactored_text:
                 classified_token = JackTranslatorLibrary._classify_token(token)
                 input_file.write(classified_token + '\n')
 
@@ -133,7 +149,6 @@ class JackTranslatorLibrary:
         """
         Appends a certain type tags to a token 
         """
-
         token_type = ""
 
         if token in JackTranslatorLibrary.SYNTAX_ELEMENTS["keywords"]:
@@ -142,7 +157,7 @@ class JackTranslatorLibrary:
         elif token in JackTranslatorLibrary.SYNTAX_ELEMENTS["symbols"]:
             token_type = "symbol"
 
-        elif '"' in token_type:
+        elif '"' in token:
             token_type = "StringConstant"
 
         elif token[0].isnumeric():
@@ -188,6 +203,24 @@ class JackTranslatorLibrary:
                 break
 
         return string_to_write, enter_block_comment
+
+    def _get_all_occurrences(elements_list, element):
+        """
+        Return all occurrences of a given element in elements_list
+        """
+        
+        index_list = []
+        index_position = 0
+
+        while True:
+            try:
+                index_position = elements_list.index(element, index_position)
+                index_list.append(index_position)
+                index_position += 1
+            except ValueError as e:
+                break
+
+        return index_list
 
 
 class JackTranslatorLibraryParser:
@@ -578,7 +611,7 @@ class JackTranslatorLibraryParser:
 
             JackTranslatorLibraryParser._parse_expression_list(self)
             self.row_pointer += 1
-
+        
         else: # Single variable
             self.row_pointer += 1
 
