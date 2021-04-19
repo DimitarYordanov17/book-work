@@ -3,9 +3,13 @@
 # Keep in mind var/local difference when building symbolic table
 
 # TODO: Implement rest statement and term translations, might check tests
-# TODO: Think about stringConstant possible bug when converting to xml
+
+
+# TODO: Add indetifier indexing in letStatement
+
 
 import re
+import copy
 
 class JackTranslatorLibrary:
     """
@@ -67,26 +71,40 @@ class JackTranslatorLibrary:
             # Clean all \n
             file_text = file_text.replace("\n", " ")
 
-            # Wider all symbols
-            for symbol in JackTranslatorLibrary.SYNTAX_ELEMENTS["symbols"]:
-                widened_symbol = " " + symbol + " "
-                file_text = file_text.replace(symbol, widened_symbol)
+            # Clean spaces, without breaking the string
+            # BTW I spent too much time on this but in the end I see that
+            # I could use regex techniques for the entire compiler...
+            # If I find time to rework the whole thing, I might find a way
+            # to do it with regexes for optimization.
+            # All the added complexity is here just so I can parse strings the correct way.
 
-            # Clean all in-file spaces
-            while "  " in file_text:
-                file_text = file_text.replace("  ", " ")
+            strings = re.findall(r'"[^"]*"', file_text)
+            non_string_file_text = re.split(r'(?:"[^"]*")', file_text)
 
-            # Split into tokens
-            file_text = file_text.split()
+            refactored_text = []
+
+            for index, non_string in enumerate(non_string_file_text):
+                while "  " in non_string:
+                    non_string = non_string.replace("  ", " ")
+
+                for symbol in JackTranslatorLibrary.SYNTAX_ELEMENTS["symbols"]:
+                    widened_symbol = " " + symbol + " "
+                    non_string = non_string.replace(symbol, widened_symbol)
+
+                refactored_text.extend(non_string.split())
+
+                try:
+                    refactored_text.append(strings[index])
+                except:
+                    break
 
             input_file.seek(0)
 
-            for token in file_text:
+            for token in refactored_text:
                 classified_token = JackTranslatorLibrary._classify_token(token)
                 input_file.write(classified_token + '\n')
 
             input_file.truncate()
-
 
     def clean(input_file_name):
         """
@@ -425,8 +443,8 @@ class JackTranslatorLibraryCodeGenerator:
         elif JackTranslatorLibraryParser._get_token_value(self, term_body[0]) in JackTranslatorLibraryParser.SYNTAX_ELEMENTS["op"]: # unaryOp term
             pass
 
-
         return term_vm
+
 
     def _get_identifier(self, identifier, subroutine_name):
         """
