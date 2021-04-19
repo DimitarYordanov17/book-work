@@ -3,9 +3,14 @@
 # Keep in mind var/local difference when building symbolic table
 
 # TODO: Implement rest statement and term translations, might check tests
+# TODO: Well, I gues I have to modify my XML translation code once again because of array manipulation, which was never mentioned before -_-
+# - the good thing is that the array declaring is working fine, but I have to implement array initalization, although
+# I am going to finish the let statement + terms translation.
+# TODO:  Fix expression evaluating when we have a let statement with pointer arithmetic calculations
 
 
-# TODO: Add indetifier indexing in letStatement
+# REMEMBER: Check test.xml for some written code
+# ALSO: LetStatement for simple constants 
 
 
 import re
@@ -336,20 +341,44 @@ class JackTranslatorLibraryCodeGenerator:
             statement_type = statement_declaration[0][1:-1]
             statement_vm_code = []
 
-            #statement_declaration = [JackTranslatorLibraryParser._get_token_value(self, tag) for tag in statement_declaration]
-
             if statement_type == "letStatement":
                 # Translate let statement
                 identifier = JackTranslatorLibraryParser._get_token_value(self, statement_declaration[2])
                 identifier = JackTranslatorLibraryCodeGenerator._get_identifier(self, identifier, subroutine_name)
 
-                # Translate expression
-                expression = statement_declaration[statement_declaration.index("<expression>") + 1:JackTranslatorLibraryCodeGenerator._get_all_occurrences(statement_declaration, "</expression>")[-1]] 
-                expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
+                if JackTranslatorLibraryParser._get_token_value(self, statement_declaration[3]) == "[":
+                    identifier_expression  = statement_declaration[5:statement_declaration.index("</expression>")]
+                    identifier_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, identifier_expression, subroutine_name)
 
-                # Add expression calculation code, pop into identifier 
-                statement_vm_code = expression_vm_code
-                statement_vm_code.append(f"pop {identifier}")
+                    # Translate expression
+                    expression = statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 2:-3]
+                    # CHECK TODO
+
+                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
+
+                    # Calculate identifier address
+                    statement_vm_code.extend([f"push {identifier}"])
+                    statement_vm_code.extend(identifier_vm_code)
+                    statement_vm_code.append("add")
+
+                    # Pop into that
+                    statement_vm_code.append("pop pointer 1")
+
+                    # Calculate value
+                    statement_vm_code.extend(expression_vm_code)
+
+                    # Pop into the desired address
+                    statement_vm_code.append("pop that 0")
+
+                else:
+                    expression = statement_declaration[statement_declaration.index("<expression>") + 1:JackTranslatorLibraryCodeGenerator._get_all_occurrences(statement_declaration, "</expression>")[-1]] 
+                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
+
+                    # Calculate value
+                    statement_vm_code.extend(expression_vm_code)
+
+                    # Pop into the desired address
+                    statement_vm_code.append(f"pop {identifier}")
 
             elif statement_type == "ifStatement":
                 # Translate if statement
@@ -399,7 +428,7 @@ class JackTranslatorLibraryCodeGenerator:
         except:
             return term_vm
 
-        inner_expression = expression_declaration[last_index + 4:-1]
+        inner_expression = expression_declaration[last_index + 4:]
 
         expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, inner_expression, subroutine_name)
 
@@ -418,7 +447,7 @@ class JackTranslatorLibraryCodeGenerator:
 
         # For testing
         # return term_vm
-
+        
         term_body = term_body[1:-1]
 
         if len(term_body) == 1: # integerConstant, stringConstant, keywordConstant, varName
@@ -440,7 +469,7 @@ class JackTranslatorLibraryCodeGenerator:
         elif next_token == "[": # varName indexing
             pass
 
-        elif JackTranslatorLibraryParser._get_token_value(self, term_body[0]) in JackTranslatorLibraryParser.SYNTAX_ELEMENTS["op"]: # unaryOp term
+        elif JackTranslatorLibraryParser._get_token_value(self, term_body[0]) in JackTranslatorLibrary.SYNTAX_ELEMENTS["op"]: # unaryOp term
             pass
 
         return term_vm
