@@ -3,9 +3,7 @@
 # Keep in mind var/local difference when building symbolic table
 
 # TODO: Implement rest statement and term translations, might check tests
-# TODO: Well, I gues I have to modify my XML translation code once again because of array manipulation, which was never mentioned before -_-
-# - the good thing is that the array declaring is working fine, but I have to implement array initalization, although
-# I am going to finish the let statement + terms translation.
+# TODO: Add object handling (class initializations) for letStatements
 
 
 # REMEMBER: Check test.xml for some written code
