@@ -1,7 +1,9 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
 # TODO: Implement rest statement and term translations, might check tests
-# TODO: Implement object (class initializations) and array handling
+# TODO: Implement object (class initializations) and array handling - check _translate_object_initalization method, more info there
+# After I implement this method, I can conitnue on finishing term translations
+
 
 import re
 import copy
@@ -332,15 +334,22 @@ class JackTranslatorLibraryCodeGenerator:
             statement_vm_code = []
 
             if statement_type == "letStatement":
+                # Get identifier notation
                 identifier = JackTranslatorLibraryParser._get_token_value(self, statement_declaration[2])
                 identifier = JackTranslatorLibraryCodeGenerator._get_identifier(self, identifier, subroutine_name)
 
+                # Get expression vm_code
                 expression = statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 1:]
+                object_initialization = JackTranslatorLibraryParser._get_token_value(self, expression[0]) == "new"
+
                 expression = expression[1:expression.index("</expression>")]
 
-                expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
+                if object_initialization:
+                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_object_initialization(self, expression, subroutine_name)
+                else:
+                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
 
-                if JackTranslatorLibraryParser._get_token_value(self, statement_declaration[3]) == "[":
+                if JackTranslatorLibraryParser._get_token_value(self, statement_declaration[3]) == "[": # We have array indexing
                     identifier_expression  = statement_declaration[5:statement_declaration.index("</expression>")]
                     identifier_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, identifier_expression, subroutine_name)
 
@@ -358,7 +367,7 @@ class JackTranslatorLibraryCodeGenerator:
                     # Pop into the desired address
                     statement_vm_code.append("pop that 0")
 
-                else:
+                else: # Normal identifier
                     # Push expression value
                     statement_vm_code.extend(expression_vm_code)
 
@@ -384,6 +393,21 @@ class JackTranslatorLibraryCodeGenerator:
 
         return statements_vm_code
 
+    def _translate_object_initialization(self, expression_declaration, subroutine_name):
+        """
+        Get the vm code for object init
+        """
+
+        calling_function = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression_declaration[1:], subroutine_name)
+        
+        # So, I cannot implement this function, before I implement subroutineCall translation. But down here is the overall of what I have to do.
+
+        # 1. Get all class attributes, so we can know in how many memory locations we can save the class - let's call this number n
+        # 2. Call Memory.alloc(n) and there is a new address value pushed in the stack
+        # 3. pop this value into pointer 0
+        # 4. pop this value into the identifier
+        # 5. call class_name.constructor(dsadsa)
+
     def _translate_expression(self, expression_declaration, subroutine_name):
         """
         Translate expression into vm code, recursively. Subroutine name is used for identifier scoping handling
@@ -405,7 +429,7 @@ class JackTranslatorLibraryCodeGenerator:
                 term_stack.pop()
 
             last_index = index
-
+    
         term_vm = JackTranslatorLibraryCodeGenerator._translate_term(self, term_body, subroutine_name)
 
         try:
@@ -449,13 +473,13 @@ class JackTranslatorLibraryCodeGenerator:
         next_token = JackTranslatorLibraryParser._get_token_value(self, term_body[1])
 
         if  next_token in [".", "("]: # Subroutine call 
-            pass
+            print("You are parsing a subroutine call, but you haven't wrote the code for it ;)")
 
         elif next_token == "[": # varName indexing
-            pass
+            print("You are parsing varname indexing, but you haven't wrote the code for it ;)")
 
         elif JackTranslatorLibraryParser._get_token_value(self, term_body[0]) in JackTranslatorLibrary.SYNTAX_ELEMENTS["op"]: # unaryOp term
-            pass
+            print("You are parsing unary op, but you haven't wrote the code for it ;)")
 
         return term_vm
 
@@ -841,6 +865,9 @@ class JackTranslatorLibraryParser:
         current_token = JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer])
 
         if current_token == "=":
+            if JackTranslatorLibraryParser._get_token_value(self, self.tokens[self.row_pointer + 1]) == "new":
+                self.row_pointer += 1
+
             self.row_pointer += 1
             JackTranslatorLibraryParser._parse_expression(self)
             self.row_pointer += 1
