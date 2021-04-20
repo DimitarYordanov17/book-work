@@ -1,14 +1,7 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
-# Keep in mind var/local difference when building symbolic table
-
 # TODO: Implement rest statement and term translations, might check tests
-# TODO: Add object handling (class initializations) for letStatements
-
-
-# REMEMBER: Check test.xml for some written code
-# ALSO: LetStatement for simple constants 
-
+# TODO: Implement object (class initializations) and array handling
 
 import re
 import copy
@@ -339,19 +332,17 @@ class JackTranslatorLibraryCodeGenerator:
             statement_vm_code = []
 
             if statement_type == "letStatement":
-                # Translate let statement
                 identifier = JackTranslatorLibraryParser._get_token_value(self, statement_declaration[2])
                 identifier = JackTranslatorLibraryCodeGenerator._get_identifier(self, identifier, subroutine_name)
+
+                expression = statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 1:]
+                expression = expression[1:expression.index("</expression>")]
+
+                expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
 
                 if JackTranslatorLibraryParser._get_token_value(self, statement_declaration[3]) == "[":
                     identifier_expression  = statement_declaration[5:statement_declaration.index("</expression>")]
                     identifier_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, identifier_expression, subroutine_name)
-
-                    # Translate expression
-                    expression = statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 1:]
-                    expression = expression[1:expression.index("</expression>")]
-
-                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
 
                     # Calculate identifier address
                     statement_vm_code.extend([f"push {identifier}"])
@@ -361,19 +352,14 @@ class JackTranslatorLibraryCodeGenerator:
                     # Pop into that
                     statement_vm_code.append("pop pointer 1")
 
-                    # Calculate value
+                    # Push expression value
                     statement_vm_code.extend(expression_vm_code)
 
                     # Pop into the desired address
                     statement_vm_code.append("pop that 0")
 
                 else:
-                    expression = statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 1:]
-                    expression = expression[1:expression.index("</expression>")]
-
-                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
-
-                    # Calculate value
+                    # Push expression value
                     statement_vm_code.extend(expression_vm_code)
 
                     # Pop into the desired address
