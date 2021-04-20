@@ -6,7 +6,6 @@
 # TODO: Well, I gues I have to modify my XML translation code once again because of array manipulation, which was never mentioned before -_-
 # - the good thing is that the array declaring is working fine, but I have to implement array initalization, although
 # I am going to finish the let statement + terms translation.
-# TODO:  Fix expression evaluating when we have a let statement with pointer arithmetic calculations
 
 
 # REMEMBER: Check test.xml for some written code
@@ -351,8 +350,8 @@ class JackTranslatorLibraryCodeGenerator:
                     identifier_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, identifier_expression, subroutine_name)
 
                     # Translate expression
-                    expression = statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 2:-3]
-                    # CHECK TODO
+                    expression = statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 1:]
+                    expression = expression[1:expression.index("</expression>")]
 
                     expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
 
@@ -371,7 +370,9 @@ class JackTranslatorLibraryCodeGenerator:
                     statement_vm_code.append("pop that 0")
 
                 else:
-                    expression = statement_declaration[statement_declaration.index("<expression>") + 1:JackTranslatorLibraryCodeGenerator._get_all_occurrences(statement_declaration, "</expression>")[-1]] 
+                    expression = statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 1:]
+                    expression = expression[1:expression.index("</expression>")]
+
                     expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
 
                     # Calculate value
