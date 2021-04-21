@@ -232,7 +232,10 @@ class JackTranslatorLibraryCodeGenerator:
     // subroutine and we translate it to VM code, using its own symbolic table. To translate the file means
     // to fill up instance's vm_code attribute
     """
-    OPERATIONS = {"+": "add", "-": "sub", "&": "and", "|": "or", "*": "call Math.multiply()", "/": "call Math.divide()"}
+    OPERATIONS = {  "+": "add", "-": "sub", "&": "and", "|": "or",
+                    "*": "call Math.multiply()", "/": "call Math.divide()",
+                    ">": "gt", "<": "lt", "=": "eq"
+                }
 
     def __init__(self, input_file_name):
         self.input_commands = open(input_file_name, 'r').readlines()
@@ -419,9 +422,58 @@ class JackTranslatorLibraryCodeGenerator:
 
         expression_vm_code = []
 
-        # TODO: Write logic
+        # Terms and operations will keep differentiated structures
+        terms = []
+        operations = []
+
+        # Differentiate into terms and operations
+        current_term = []
+        stack = []
+
+        for index, tag in enumerate(expression_declaration):
+            tag_value = JackTranslatorLibraryParser._get_tag_value(self, tag)
+
+            if " " not in tag and "term" in tag:
+                if "/" in tag:
+                    stack.pop()
+                else:
+                    stack.append(1)
+
+                if len(stack) == 0:
+                    terms.append(current_term)
+                    current_term = []
+                    continue
+
+            elif tag_value in JackTranslatorLibrary.SYNTAX_ELEMENTS["op"]:  
+                operations.append(tag_value)
+
+            else:
+                current_term.append(tag)
+        
+        # Translate each term
+        terms_vm = []
+
+        for term in terms:
+            print(term)
+            terms_vm.append(JackTranslatorLibraryCodeGenerator._translate_term(self, term, subroutine_name))
+        # Construct expression VM code
+        expression_vm_code.extend(terms_vm[0])
+
+        if len(terms_vm) > 1:
+            expression_vm_code.extend(terms_vm[1])
+
+            for index, operation in enumerate(operations):
+                operation_vm = JackTranslatorLibraryCodeGenerator.OPERATIONS[operation]
+
+                expression_vm_code.append(operation_vm)
+
+                try:
+                    expression_vm_code.extend(terms_vm[index + 2])
+                except:
+                    break
 
         return expression_vm_code
+
 
     def _translate_term(self, term_declaration, subroutine_name):
         """
