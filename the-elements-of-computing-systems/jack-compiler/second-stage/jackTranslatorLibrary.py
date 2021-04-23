@@ -417,6 +417,8 @@ class JackTranslatorLibraryCodeGenerator:
     def _translate_expression(self, expression_declaration, subroutine_name):
         """
         Translate a sequence of terms to VM code.
+        /* KEEP IN MIND: Operator priority is not defined by the language, except that expressions in parentheses are evaluated first.
+        Thus an expression like 2+3*4 may yield either 20 or 14, whereas 2+(3*4) is guaranteed to yield 14.*/
         """
 
         expression_vm_code = []
@@ -449,6 +451,7 @@ class JackTranslatorLibraryCodeGenerator:
 
         # Translate each term
         terms_vm = []
+
         for term in terms:
             terms_vm.append(JackTranslatorLibraryCodeGenerator._translate_term(self, term, subroutine_name))
 
@@ -481,7 +484,6 @@ class JackTranslatorLibraryCodeGenerator:
             term_type = term_declaration[0].split()[0][1:-1]
             term_value = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0])
 
-            print(term_value, term_type)
 
             if term_type == "identifier":
                 term_vm_code.append(f"push {JackTranslatorLibraryCodeGenerator._get_identifier(self, term_value, subroutine_name)}")
