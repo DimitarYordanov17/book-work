@@ -529,7 +529,10 @@ class JackTranslatorLibraryCodeGenerator:
                 term_vm_code.append(command_expression)
 
             elif term_value == "(": # Bracket expression
-                pass
+                term_expression = term_declaration[2:-2]
+                term_expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, term_expression, subroutine_name)
+                
+                term_vm_code.extend(term_expression_vm_code)
 
         return term_vm_code
 
