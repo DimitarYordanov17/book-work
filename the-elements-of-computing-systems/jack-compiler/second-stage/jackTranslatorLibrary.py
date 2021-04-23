@@ -2,8 +2,7 @@
 
 # TODO: Implement rest statement and term translations, might check tests
 # TODO: Implement object (class initializations) and array handling - check _translate_object_initalization method, more info there
-# After I implement this method, I can conitnue on finishing term translations
-
+# TODO: Test expression list translation
 
 import re
 import copy
@@ -431,31 +430,29 @@ class JackTranslatorLibraryCodeGenerator:
         stack = []
 
         for index, tag in enumerate(expression_declaration):
-            tag_value = JackTranslatorLibraryParser._get_tag_value(self, tag)
-
-            if " " not in tag and "term" in tag:
+            
+            if "term" in tag and " " not in tag:
                 if "/" in tag:
                     stack.pop()
                 else:
                     stack.append(1)
-
-                if len(stack) == 0:
-                    terms.append(current_term)
-                    current_term = []
-                    continue
-
-            elif tag_value in JackTranslatorLibrary.SYNTAX_ELEMENTS["op"]:  
-                operations.append(tag_value)
-
-            else:
+            
+            if len(stack) > 0:
                 current_term.append(tag)
-        
+            else:
+                tag_value = JackTranslatorLibraryParser._get_tag_value(self, tag)
+                if tag_value in JackTranslatorLibrary.SYNTAX_ELEMENTS["op"]:
+                    operations.append(tag_value)
+                else:
+                    terms.append(current_term[1:])
+                    current_term = []
+
         # Translate each term
         terms_vm = []
 
         for term in terms:
-            print(term)
             terms_vm.append(JackTranslatorLibraryCodeGenerator._translate_term(self, term, subroutine_name))
+
         # Construct expression VM code
         expression_vm_code.extend(terms_vm[0])
 
@@ -479,21 +476,78 @@ class JackTranslatorLibraryCodeGenerator:
         """
         Translate a term to VM code
         """
-
         term_vm_code = []
 
-        # TODO: Write logic
+        if len(term_declaration) == 1: # Single identifier/constant
+            term_type = term_declaration[0].split()[1:-1]
+            term_value = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0])
+
+            if term_type == "identifier":
+                term_vm_code.append(f"push {JackTranslatorLibraryCodeGenerator._get_identifier(self, term_value)}")
+            else:
+                term_vm_code.append(f"push {term_value}")
+
+        else:
+            term_value = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0])
+            next_token = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[1])
+
+            if  next_token in [".", "("]: # Subroutine call
+                if next_token == ".": # Method call
+                    term_vm_code.append("push this")
+
+                    expression_list = term_declaration[term_declaration.index("<symbol> ( </symbol>") + 2: -2]
+                    expression_list_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression_list(self, expression_list, subroutine_name)
+
+                    term_vm_code.extend(expression_list_vm_code)
+
+                    term_vm_code.append(f"call {term_value}.{JackTranslatorLibraryParser._get_tag_value(self, term_declaration[2])}")
+                else: # Function call
+                    pass
+    
+            elif next_token == "[": # varName indexing
+                pass
+
+            elif JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0]) in JackTranslatorLibrary.SYNTAX_ELEMENTS["op"]: # unaryOp term
+                pass
 
         return term_vm_code
 
     def _translate_expression_list(self, expression_list_declaration, subroutine_name):
         """
         Translate a sequence of expressions to VM code.
+        /* WARNNING: Method not tested*/
         """
 
         expression_list_vm_code = []
 
-        # TODO: Write logic
+        # expressions will contain every separate expression
+        expressions = []
+
+        # Differentiate into expressions and operations
+        current_expression = []
+        stack = []
+
+        for index, tag in enumerate(expression_list_declaration):
+            tag_value = JackTranslatorLibraryParser._get_tag_value(self, tag)
+
+            if " " not in tag and "expression" in tag:
+                if "/" in tag:
+                    stack.pop()
+                else:
+                    stack.append(1)
+
+                if len(stack) == 0:
+                    expressions.append(current_expression)
+                    current_expression = []
+                    continue
+
+            elif tag_value != ",":
+                current_expression.append(tag)
+
+        # Extend the expression list VM code with which individual expression VM code
+
+        for expression in expressions:
+            expression_list_vm_code.append(JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name))
 
         return expression_list_vm_code
 
