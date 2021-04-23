@@ -344,7 +344,7 @@ class JackTranslatorLibraryCodeGenerator:
                 expression_declaration = statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 2:-3]
 
                 # Check if we have a object initialization
-                initializing_object = JackTranslatorLibraryParser._get_tag_value(self, expression_declaration[0]) == "new"
+                initializing_object = JackTranslatorLibraryParser._get_tag_value(self, statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 1]) == "new"
 
                 # Translate expression or object initalization
                 if initializing_object:
