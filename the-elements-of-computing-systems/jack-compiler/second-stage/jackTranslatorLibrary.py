@@ -23,7 +23,7 @@ class JackTranslatorLibrary:
 
         "statements": ['let', 'if', 'while', 'do', 'return'],
 
-        "op": ['+', '-', '*', '/', '&', '|', '<', '>', '='],
+        "op": ['+', '-', '*', '/', '&', '~', '|', '<', '>', '='],
 
         "keywords": ['class', 'constructor', 'function',
                      'method', 'field', 'static', 'var',
@@ -517,7 +517,18 @@ class JackTranslatorLibraryCodeGenerator:
 
                 term_vm_code.append("push that 0")
 
-            elif JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0]) in JackTranslatorLibrary.SYNTAX_ELEMENTS["op"]: # unaryOp term
+            elif term_value in JackTranslatorLibrary.SYNTAX_ELEMENTS["op"]: # unaryOp term
+                term_expression = term_declaration[1:]
+                
+                term_expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, term_expression, subroutine_name)
+
+                term_vm_code.extend(term_expression_vm_code)
+
+                command_expression = "neg" if term_value == "-" else "not"
+
+                term_vm_code.append(command_expression)
+
+            elif term_value == "(": # Bracket expression
                 pass
 
         return term_vm_code
