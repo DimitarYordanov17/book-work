@@ -344,11 +344,11 @@ class JackTranslatorLibraryCodeGenerator:
                 expression_declaration = statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 2:-3]
 
                 # Check if we have a object initialization
-                initializing_object = JackTranslatorLibraryParser._get_tag_value(self, statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 1]) == "new"
+                initializing_object = JackTranslatorLibraryParser._get_tag_value(self, statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 5]) == "new"
 
                 # Translate expression or object initalization
                 if initializing_object:
-                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_object_initialization(self, expression_declaration, subroutine_name)
+                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_object_initialization(self, expression_declaration[1:], subroutine_name)
                 else:
                     expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression_declaration, subroutine_name)
 
@@ -410,7 +410,27 @@ class JackTranslatorLibraryCodeGenerator:
 
         object_initialization_vm_code = []
 
-        # TODO: Write logic
+        # Get arguments translation
+        expression_list = expression_declaration[expression_declaration.index("<expressionList>") + 1: -3]
+        expression_list_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression_list(self, expression_list, subroutine_name)
+
+        # Find out how much memory should be allocated
+        constructor_class = JackTranslatorLibraryParser._get_tag_value(self, expression_declaration[0])
+
+        field_vars_count = list(self.subroutines[subroutine_name][1].values()).count("field")
+
+        # Call Memory.alloc
+        object_initialization_vm_code.append(f"call Memory.alloc({field_vars_count})")
+
+        # Save into this
+        object_initialization_vm_code.append("pop pointer 0")
+
+        # Add translated arguments
+        for argument_vm_command in expression_list_vm_code:
+            object_initialization_vm_code.extend(argument_vm_command)
+
+        # Call the constructor
+        object_initialization_vm_code.append(f"call {constructor_class}.new()")
 
         return object_initialization_vm_code
 
@@ -557,26 +577,25 @@ class JackTranslatorLibraryCodeGenerator:
         stack = []
 
         for index, tag in enumerate(expression_list_declaration):
-            tag_value = JackTranslatorLibraryParser._get_tag_value(self, tag)
-
-            if " " not in tag and "expression" in tag:
+            
+            if "expression" in tag and " " not in tag:
                 if "/" in tag:
                     stack.pop()
                 else:
                     stack.append(1)
-
-                if len(stack) == 0:
-                    expressions.append(current_expression)
-                    current_expression = []
-                    continue
-
-            elif tag_value != ",":
+            
+            if len(stack) > 0:
                 current_expression.append(tag)
-
+            else:
+                tag_value = JackTranslatorLibraryParser._get_tag_value(self, tag)
+                expressions.append(current_expression[1:])
+                current_expression = []
+                
         # Extend the expression list VM code with which individual expression VM code
 
         for expression in expressions:
-            expression_list_vm_code.append(JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name))
+            if expression:
+                expression_list_vm_code.append(JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name))
 
         return expression_list_vm_code
 
