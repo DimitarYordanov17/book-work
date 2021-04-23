@@ -476,12 +476,15 @@ class JackTranslatorLibraryCodeGenerator:
         Translate a term to VM code
         """
         term_vm_code = []
+
         if len(term_declaration) == 1: # Single identifier/constant
-            term_type = term_declaration[0].split()[1:-1]
+            term_type = term_declaration[0].split()[0][1:-1]
             term_value = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0])
 
+            print(term_value, term_type)
+
             if term_type == "identifier":
-                term_vm_code.append(f"push {JackTranslatorLibraryCodeGenerator._get_identifier(self, term_value)}")
+                term_vm_code.append(f"push {JackTranslatorLibraryCodeGenerator._get_identifier(self, term_value, subroutine_name)}")
             else:
                 term_vm_code.append(f"push {term_value}")
 
@@ -531,7 +534,7 @@ class JackTranslatorLibraryCodeGenerator:
             elif term_value == "(": # Bracket expression
                 term_expression = term_declaration[2:-2]
                 term_expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, term_expression, subroutine_name)
-                
+
                 term_vm_code.extend(term_expression_vm_code)
 
         return term_vm_code
