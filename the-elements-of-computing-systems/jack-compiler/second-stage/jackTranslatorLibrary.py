@@ -348,7 +348,7 @@ class JackTranslatorLibraryCodeGenerator:
 
                 # Translate expression or object initalization
                 if initializing_object:
-                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_object_initialization(self, expression,_declaration, subroutine_name)
+                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_object_initialization(self, expression_declaration, subroutine_name)
                 else:
                     expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression_declaration, subroutine_name)
 
