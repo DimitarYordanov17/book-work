@@ -504,7 +504,18 @@ class JackTranslatorLibraryCodeGenerator:
                     term_vm_code.append(f"call {JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0])}")
 
             elif next_token == "[": # varName indexing
-                pass
+                array_indexing_expression = term_declaration[term_declaration.index("<symbol> [ </symbol>") + 2: -2]
+                array_indexing_expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, array_indexing_expression, subroutine_name)
+
+                identifier = JackTranslatorLibraryCodeGenerator._get_identifier(self, term_value, subroutine_name)
+
+                term_vm_code.extend([f"push {identifier}"])
+                term_vm_code.extend(array_indexing_expression_vm_code)
+                term_vm_code.append("add")
+
+                term_vm_code.append("pop pointer 1")
+
+                term_vm_code.append("push that 0")
 
             elif JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0]) in JackTranslatorLibrary.SYNTAX_ELEMENTS["op"]: # unaryOp term
                 pass
