@@ -334,23 +334,7 @@ class JackTranslatorLibraryCodeGenerator:
             if len(stack) == 0:
                 statements.append(current_statement)
                 current_statement = []
-        """
-        for tag in statement_declarations:
-            if " " not in tag and "Statement" in tag:
-                if "/" in tag:
-                    current_statement.append(tag)
-                    stack.pop()
-                    continue
-                else:
-                    stack.append(1)
 
-            if len(stack) > 0:
-                current_statement.append(tag)
-            else:
-                if current_statement:
-                    statements.append(current_statement)
-                    current_statement = []
-        """
         # Translate the differentiated statements
         for statement_declaration in statements:
             self.translated_statements += 1
@@ -405,6 +389,15 @@ class JackTranslatorLibraryCodeGenerator:
                 
 
             elif statement_type == "ifStatement":
+                # Get condition evaluation
+                cond_expression = statement_declaration[statement_declaration.index("<symbol> ( </symbol>") + 2:statement_declaration.index("<symbol> { </symbol>") - 2]
+                cond_expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, cond_expression, subroutine_name)
+
+                # Push condition evaluation and flip it
+                statement_vm_code.extend(cond_expression_vm_code)
+                statement_vm_code.append("not")
+
+
                 # Differentiate into statements
                 if_statement_body = statement_declaration[statement_declaration.index("<symbol> { </symbol>") + 2: -3]
 
@@ -427,23 +420,16 @@ class JackTranslatorLibraryCodeGenerator:
                         differentiating_else_index = inner_index
                         break
 
+                # Branch on different types
                 if differentiating_else_index != 0: # In case we have an else
                     if_true_statements = if_statement_body[:differentiating_else_index - 2]
-
-                    # Translate if true statements
-                    if_true_statements_vm_code = JackTranslatorLibraryCodeGenerator._translate_statements(self, if_true_statements, subroutine_name)
-
-                    # Get condition evaluation and add it to the statement vm code
-                    cond_expression = statement_declaration[statement_declaration.index("<symbol> ( </symbol>") + 2:statement_declaration.index("<symbol> { </symbol>") - 2]
-                    cond_expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, cond_expression, subroutine_name)
 
                     # Generate unique labels
                     end_label = f"{subroutine_name}:{statement_type}:{self.translated_statements}:END"
                     second_statement_label = f"{subroutine_name}:{statement_type}:{self.translated_statements}:EXECUTE_SECOND_STATEMENT"
 
-                    # Push condition evalutation and reverse it
-                    statement_vm_code.extend(cond_expression_vm_code)
-                    statement_vm_code.append("not")
+                    # Translate if true statements
+                    if_true_statements_vm_code = JackTranslatorLibraryCodeGenerator._translate_statements(self, if_true_statements, subroutine_name)
 
                     # Add condition
                     statement_vm_code.append(f"if-goto {second_statement_label}")
@@ -465,7 +451,20 @@ class JackTranslatorLibraryCodeGenerator:
                     statement_vm_code.append(f"label {end_label}")
 
                 else:
-                    return []
+                    # Generate unique end label
+                    end_label = f"{subroutine_name}:{statement_type}:{self.translated_statements}:END"
+
+                    # Translate body
+                    if_statement_body_vm_code = JackTranslatorLibraryCodeGenerator._translate_statements(self, if_statement_body, subroutine_name)
+
+                    # Add if goto end
+                    statement_vm_code.append(f"if-goto {end_label}")
+
+                    # Add translated if body
+                    statement_vm_code.extend(if_statement_body_vm_code)
+
+                    # Declare ending label
+                    statement_vm_code.append(f"label {end_label}")
 
 
             elif statement_type == "whileStatement":
@@ -479,6 +478,9 @@ class JackTranslatorLibraryCodeGenerator:
             elif statement_type == "ReturnStatement":
                 # ...
                 pass
+            else:
+                self.translated_statements -= 1
+                continue
 
             statements_vm_code.extend(statement_vm_code)
 
