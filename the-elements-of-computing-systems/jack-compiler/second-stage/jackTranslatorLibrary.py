@@ -1,8 +1,9 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
-# TODO: Implement rest statement and term translations, might check tests
-# TODO: Implement object (class initializations) and array handling - check _translate_object_initalization method, more info there
-# TODO: Test expression list translation
+# TODO: Implement rest statements parsing
+# TODO: Test object initialization and expression list parsing
+# TODO: Implement string parsing, with calls to OS
+# THINK ABOUT: Function declaration translation
 
 import re
 import copy
@@ -383,8 +384,45 @@ class JackTranslatorLibraryCodeGenerator:
                 
 
             elif statement_type == "ifStatement":
-                # Translate if statement
-                pass
+                # Get condition evaluation and add it to the statement vm code
+                cond_expression = statement_declaration[statement_declaration.index("<symbol> ( </symbol>") + 2:statement_declaration.index("<symbol> { </symbol>") - 2]
+                cond_expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, cond_expression, subroutine_name)
+
+                # Generate unique labels
+                end_label = f"{subroutine_name}:{statement_type}:{index}:END"
+                second_statement_label = f"{subroutine_name}:{statement_type}:{index}:EXECUTE_SECOND_STATEMENT"
+
+                # Push condition evalutation and reverse it
+                statement_vm_code.extend(cond_expression_vm_code)
+                statement_vm_code.append("not")
+
+                # Add condition
+                statement_vm_code.append(f"if-goto {second_statement_label}")
+
+                # Differentiate into statements
+                if_statement_body = statement_declaration[statement_declaration.index("<symbol> { </symbol>") + 2: -3]
+
+                if_true_statements = []
+                if_false_statements = []
+
+                depth = 0
+                differentiating_else_index = 0
+
+                for inner_index, tag in enumerate(if_statement_body):
+                    tag_value = JackTranslatorLibraryParser._get_tag_value(self, tag)
+
+                    if " " not in tag: # Opening/closing tag
+                        if "/" in tag:
+                            depth -= 1
+                        else:
+                            depth += 1
+
+                    if tag_value == "else":
+                        differentiating_else_index = inner_index
+                        
+
+                if_true_statements = if_statement_body[:differentiating_else_index - 2]
+                if_false_statements = if_statement_body[differentiating_else_index + 3:]
 
             elif statement_type == "whileStatement":
                 # Translate while statement
@@ -406,6 +444,7 @@ class JackTranslatorLibraryCodeGenerator:
     def _translate_object_initialization(self, expression_declaration, subroutine_name):
         """
         Get the vm code for object init
+        /* WARNING: Not fully tested */
         """
 
         object_initialization_vm_code = []
@@ -590,7 +629,7 @@ class JackTranslatorLibraryCodeGenerator:
                 tag_value = JackTranslatorLibraryParser._get_tag_value(self, tag)
                 expressions.append(current_expression[1:])
                 current_expression = []
-                
+
         # Extend the expression list VM code with which individual expression VM code
 
         for expression in expressions:
