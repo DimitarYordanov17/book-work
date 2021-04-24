@@ -468,8 +468,36 @@ class JackTranslatorLibraryCodeGenerator:
 
 
             elif statement_type == "whileStatement":
-                # Translate while statement
-                pass
+                # Generate unique labels
+                start_label = f"{subroutine_name}:{statement_type}:{self.translated_statements}:START"
+                end_label = f"{subroutine_name}:{statement_type}:{self.translated_statements}:END"
+
+                # Get translated condition evaluation
+                cond_expression = statement_declaration[statement_declaration.index("<symbol> ( </symbol>") + 2:statement_declaration.index("<symbol> { </symbol>") - 2]
+                cond_expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, cond_expression, subroutine_name)
+
+                # Get translated statement body
+                statement_body = statement_declaration[statement_declaration.index("<symbol> { </symbol>") + 2:-3]
+                statement_body_vm_code = JackTranslatorLibraryCodeGenerator._translate_statements(self, statement_body, subroutine_name)
+
+                # Declare starting lbel
+                statement_vm_code.append(f"label {start_label}")
+
+                # Add flipped condition evaluation
+                statement_vm_code.extend(cond_expression_vm_code)
+                statement_vm_code.append("not")
+
+                # Add jump to end
+                statement_vm_code.append(f"if-goto {end_label}")
+
+                # Add statement body
+                statement_vm_code.extend(statement_body_vm_code)
+
+                # Add recursive jump
+                statement_vm_code.append(f"goto {start_label}")
+
+                # Declare ending label
+                statement_vm_code.append(f"label {end_label}")
 
             elif statement_type == "doStatement":
                 # ...
