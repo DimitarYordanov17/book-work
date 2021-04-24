@@ -3,7 +3,8 @@
 # TODO: Implement rest statements parsing
 # TODO: Test object initialization and expression list parsing
 # TODO: Implement string parsing, with calls to OS
-# THINK ABOUT: Function declaration translation
+# THINK ABOUT: Function declaration translation and CONSTANTS (null and false as 0)
+# WARNING: Several untested methods (do and return statement translation + several more)
 
 import re
 import copy
@@ -505,8 +506,22 @@ class JackTranslatorLibraryCodeGenerator:
                 statement_vm_code = JackTranslatorLibraryCodeGenerator._translate_term(self, statement_body, subroutine_name)
 
             elif statement_type == "ReturnStatement":
-                # ...
-                pass
+                # Get return type
+                return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[subroutine_name][0][1])
+                
+                # Branch on function type
+                if return_type == "void":
+                    statement_vm_code.append("return 0")
+                else:
+                    # Get translated return value and add it
+                    expression = statement_declaration[3:-3]
+                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
+
+                    statement_vm_code.extend(expression_vm_code)
+
+                    # Add return
+                    statement_vm_code.append("return")
+
             else:
                 self.translated_statements -= 1
                 continue
