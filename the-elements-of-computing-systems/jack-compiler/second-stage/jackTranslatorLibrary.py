@@ -500,8 +500,9 @@ class JackTranslatorLibraryCodeGenerator:
                 statement_vm_code.append(f"label {end_label}")
 
             elif statement_type == "doStatement":
-                # ...
-                pass
+                # We can one small trick here - this statement can be just a term
+                statement_body = statement_declaration[2:-2]
+                statement_vm_code = JackTranslatorLibraryCodeGenerator._translate_term(self, statement_body, subroutine_name)
 
             elif statement_type == "ReturnStatement":
                 # ...
