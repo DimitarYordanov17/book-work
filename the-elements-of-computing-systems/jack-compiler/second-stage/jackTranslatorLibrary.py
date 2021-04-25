@@ -646,6 +646,11 @@ class JackTranslatorLibraryCodeGenerator:
 
             if term_type == "identifier":
                 term_vm_code.append(f"push {JackTranslatorLibraryCodeGenerator._get_identifier(self, term_value, subroutine_name)}")
+            elif term_type == "keyword":
+                if term_value in ["null", "false"]:
+                    term_vm_code.append("push constant 0")
+                else:
+                    term_vm_code.extend(["push constant 1", "neg"])
             else:
                 term_vm_code.append(f"push {term_value}")
 
