@@ -1,9 +1,6 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
-# TODO: Test object initialization and expression list parsing
-# TODO: Implement string parsing, with calls to OS
-# THINK ABOUT: Function declaration translation and CONSTANTS (null and false as 0)
-# WARNING: Several untested methods (do and return statement translation + several more)
+# WARNING: Might have errors: object initialization, expression list parsing, string translation, difference between array init and object init
 
 import re
 import copy
@@ -172,8 +169,8 @@ class JackTranslatorLibrary:
         elif token in JackTranslatorLibrary.SYNTAX_ELEMENTS["symbols"]:
             token_type = "symbol"
 
-        elif '"' in token_type:
-            token_type = "StringConstant"
+        elif '"' in token:
+            token_type = "stringConstant"
 
         elif token[0].isnumeric():
             token_type = "integerConstant"
@@ -569,7 +566,7 @@ class JackTranslatorLibraryCodeGenerator:
             object_initialization_vm_code.extend(argument_vm_command)
 
         # Call the constructor
-        object_initialization_vm_code.append(f"call {constructor_class}.new()")
+        object_initialization_vm_code.append(f"call {constructor_class}.new")
 
         return object_initialization_vm_code
 
@@ -643,16 +640,28 @@ class JackTranslatorLibraryCodeGenerator:
             term_type = term_declaration[0].split()[0][1:-1]
             term_value = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0])
 
-
             if term_type == "identifier":
                 term_vm_code.append(f"push {JackTranslatorLibraryCodeGenerator._get_identifier(self, term_value, subroutine_name)}")
+
             elif term_type == "keyword":
                 if term_value in ["null", "false"]:
                     term_vm_code.append("push constant 0")
                 else:
                     term_vm_code.extend(["push constant 1", "neg"])
-            else:
-                term_vm_code.append(f"push {term_value}")
+
+            elif term_type == "integerConstant":
+                term_vm_code.append(f"push constant {term_value}")
+
+            elif term_type == "stringConstant":
+                # WARNING: Not fully tested
+                string_length = len(term_value) - 2
+
+                # Construct a new string object
+                term_vm_code.extend([f"push constant {string_length}", "call String.new"])
+
+                # For every char, append it to the string
+                for char in term_value:
+                    term_vm_code.extend([f"push constant {ord(char)}", "call String.appendChar"])
 
         else:
             term_value = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0])
@@ -661,7 +670,7 @@ class JackTranslatorLibraryCodeGenerator:
                 subroutine_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[subroutine_name][0])
 
                 if subroutine_type == "method": # Method call
-                    term_vm_code.append("push this")
+                    term_vm_code.append("push pointer 0")
 
                 expression_list = term_declaration[term_declaration.index("<symbol> ( </symbol>") + 2: -2]
                 expression_list_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression_list(self, expression_list, subroutine_name)
