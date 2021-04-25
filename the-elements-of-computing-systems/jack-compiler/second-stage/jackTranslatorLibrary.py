@@ -1,6 +1,5 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
-# TODO: Implement rest statements parsing
 # TODO: Test object initialization and expression list parsing
 # TODO: Implement string parsing, with calls to OS
 # THINK ABOUT: Function declaration translation and CONSTANTS (null and false as 0)
@@ -515,9 +514,10 @@ class JackTranslatorLibraryCodeGenerator:
                 else:
                     # Get translated return value and add it
                     expression = statement_declaration[3:-3]
-                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
 
-                    statement_vm_code.extend(expression_vm_code)
+                    if expression:
+                        expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
+                        statement_vm_code.extend(expression_vm_code)
 
                     # Add return
                     statement_vm_code.append("return")
@@ -643,7 +643,9 @@ class JackTranslatorLibraryCodeGenerator:
             term_value = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0])
             next_token = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[1])
             if  next_token in [".", "("]: # Subroutine call
-                if next_token == ".": # Method call
+                subroutine_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[subroutine_name][0])
+
+                if subroutine_type == "method": # Method call
                     term_vm_code.append("push this")
 
                 expression_list = term_declaration[term_declaration.index("<symbol> ( </symbol>") + 2: -2]
