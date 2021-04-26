@@ -507,25 +507,14 @@ class JackTranslatorLibraryCodeGenerator:
             elif statement_type == "doStatement":
                 # We can use one small trick here - this statement can be just a term
                 statement_body = statement_declaration[2:-2]
-                statement_vm_code = JackTranslatorLibraryCodeGenerator._translate_term(self, statement_body, subroutine_name)
-
-                callee = statement_vm_code[-1].split()[-1]
-
-                # A lot of code went for this :D
-                if callee not in self.subroutines.keys(): # Accessing OS subroutine
-                    callee_class = callee.split('.')[0]
-                    callee_subroutine_name = callee.split('.')[1]
-
-                    callee_return_type = self.std_lib[callee_class][callee_subroutine_name][1]
-                else:
-                    callee_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee][0][1])
-
+                statement_vm_code = JackTranslatorLibraryCodeGenerator._translate_term(self, statement_body, subroutine_name, statement='do')
+                callee_return_type = statement_vm_code.pop()
+      
                 if callee_return_type == "void":
                     # Have to find a way to discard the returned constant from void calling:
                     # Since we know the returned value is 0, we can just simply pick a random register, push it, add the 2 values in the stack,
                     # number + 0, which is equal to number, so we pop it back onto the register, and now the stack is cleaned
                     statement_vm_code.extend(["push pointer 0", "add", "pop pointer 0"])
-
 
             elif statement_type == "ReturnStatement":
                 # Get return type
@@ -646,7 +635,7 @@ class JackTranslatorLibraryCodeGenerator:
         return expression_vm_code
 
 
-    def _translate_term(self, term_declaration, subroutine_name):
+    def _translate_term(self, term_declaration, subroutine_name, statement=""):
         """
         Translate a term to VM code
         """
@@ -682,33 +671,54 @@ class JackTranslatorLibraryCodeGenerator:
         else:
             term_value = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0])
             next_token = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[1])
+
             if  next_token in [".", "("]: # Subroutine call
-                if next_token == '.':
-                    callee = term_value + next_token + JackTranslatorLibraryParser._get_tag_value(self, term_declaration[2])
-                else:
-                    callee = term_value
-                
-                if callee not in self.subroutines.keys():
-                    callee_class = callee.split('.')[0]
-                    callee_name = callee.split('.')[1]
-
-                    callee_subroutine_type = self.std_lib[callee_class][callee_name][0]
-                else:
-                    callee_subroutine_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee][0][0])
-                
-                if callee_subroutine_type == "method": # Method call
-                    term_vm_code.append("push pointer 0")
-
                 expression_list = term_declaration[term_declaration.index("<symbol> ( </symbol>") + 2: -2]
                 expression_list_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression_list(self, expression_list, subroutine_name)
 
+                callee_class_name = term_value if next_token == '.' else ""
+                callee_subroutine_name = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[2]) if next_token == '.' else term_value
+                callee = callee_class_name + '.' + callee_subroutine_name
+                
+                subroutine_return_type = ""
+
+                outer_method = False
+
+                if not callee_class_name: # Method in current class
+                    term_vm_code.append('push this')
+                    callee_class_name = subroutine_name
+
+                    subroutine_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee_subroutine_name][0][1])
+
+                elif callee_class_name == self.class_info[0]: # Function/constructor in current class
+                    subroutine_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee_subroutine_name][0][1])
+
+                elif callee in self.std_lib_subroutines and self.std_lib[callee_class_name][callee_subroutine_name][0] != 'method': # Function/constructor outside current class 
+                    subroutine_return_type = self.std_lib[callee_class_name][callee_subroutine_name][1]
+
+                else: # Method outside current class
+                    var_name = callee_class_name
+                    method = callee_subroutine_name
+                    var_properties = self.subroutines[subroutine_name][1][var_name]
+                   
+                    callee_class_name = var_properties[0]
+                    term_vm_code.extend([f"push {var_properties[1]} {var_properties[2]}"])
+                    
+                    if callee_class_name in self.std_lib.keys():
+                        subroutine_return_type = self.std_lib[callee_class_name][method][1]
+                    else:
+                        subroutine_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee_subroutine_name][0][1])
+    
+               
                 for vm_command in expression_list_vm_code:
                     term_vm_code.extend(vm_command)
 
-                if next_token == ".":
-                    term_vm_code.append(f"call {term_value}.{JackTranslatorLibraryParser._get_tag_value(self, term_declaration[2])}")
-                else:
-                    term_vm_code.append(f"call {JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0])}")
+                args_count = len(expression_list_vm_code)
+                
+                term_vm_code.append(f"call {callee_class_name}.{callee_subroutine_name} {args_count}")
+                
+                if statement == 'do':
+                    term_vm_code.append(subroutine_return_type)
 
             elif next_token == "[": # varName indexing
                 array_indexing_expression = term_declaration[term_declaration.index("<symbol> [ </symbol>") + 2: -2]
