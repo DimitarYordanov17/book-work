@@ -14,8 +14,8 @@ class JackStandardLibrary:
     """
     
     def __init__(self, file_name='jackStandardLibraryRaw.txt'):
-        standard_library_raw = open(file_name, 'r').read()
-        standard_library_formatted = JackStandardLibrary.construct_formatted_library(standard_library_raw)
+        self.standard_library_raw = open(file_name, 'r').read()
+        self.standard_library_formatted = JackStandardLibrary.construct_formatted_library(self.standard_library_raw)
        
     def construct_formatted_library(text):
         """
