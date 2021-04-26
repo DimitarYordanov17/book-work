@@ -295,9 +295,9 @@ class JackTranslatorLibraryCodeGenerator:
         # Translate meta information
         subroutine_title = f"function {class_name}.{subroutine_name}"
         subroutine_kind = JackTranslatorLibraryParser._get_tag_value(self, subroutine_declaration[0])
-        arguments_count = [x for y in list(subroutine_symbolic_table.values()) for x in y].count("argument")
+        locals_count = [x for y in list(subroutine_symbolic_table.values()) for x in y].count("var")
 
-        subroutine_declaration_title = subroutine_title + f" {arguments_count}"
+        subroutine_declaration_title = subroutine_title + f" {locals_count}"
         subroutine_vm_code.append(subroutine_declaration_title)
 
         # Add translation bootstrap code (setting the "this" segment)
