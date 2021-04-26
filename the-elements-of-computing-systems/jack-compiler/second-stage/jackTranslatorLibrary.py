@@ -1,6 +1,7 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
-# WARNING: Might have errors: object initialization, expression list parsing, string translation, difference between array init and object init
+# WARNING: Might have errors: object initialization, expression list parsing, string translation, difference between array init and object init, return and do
+# TODO: Fix do statement translation interaction with OS, happening when we try to translate Fraction.jack
 
 import re
 import copy
@@ -501,7 +502,13 @@ class JackTranslatorLibraryCodeGenerator:
                 statement_body = statement_declaration[2:-2]
                 statement_vm_code = JackTranslatorLibraryCodeGenerator._translate_term(self, statement_body, subroutine_name)
 
-                callee = statement_vm_code[-1][statement_vm_code[-1].index('.') + 1:]
+                callee = ""
+
+                if '.' in statement_vm_code[-1]:
+                    callee = statement_vm_code[-1][statement_vm_code[-1].index('.') + 1:]
+                else:
+                    callee = statement_vm_code[-1].split()[-1]
+
                 callee_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee][0][1])
 
                 if callee_return_type == "void":
