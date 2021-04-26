@@ -683,9 +683,20 @@ class JackTranslatorLibraryCodeGenerator:
             term_value = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0])
             next_token = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[1])
             if  next_token in [".", "("]: # Subroutine call
-                subroutine_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[subroutine_name][0])
+                if next_token == '.':
+                    callee = term_value + next_token + JackTranslatorLibraryParser._get_tag_value(self, term_declaration[2])
+                else:
+                    callee = term_value
+                
+                if callee not in self.subroutines.keys():
+                    callee_class = callee.split('.')[0]
+                    callee_name = callee.split('.')[1]
 
-                if subroutine_type == "method": # Method call
+                    callee_subroutine_type = self.std_lib[callee_class][callee_name][0]
+                else:
+                    callee_subroutine_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee][0][0])
+                
+                if callee_subroutine_type == "method": # Method call
                     term_vm_code.append("push pointer 0")
 
                 expression_list = term_declaration[term_declaration.index("<symbol> ( </symbol>") + 2: -2]
