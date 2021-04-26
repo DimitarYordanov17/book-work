@@ -1,8 +1,11 @@
 # An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
 
 # WARNING: Might have errors: object initialization, expression list parsing, string translation, difference between array init and object init, return and do
-# TODO: Fix do statement translation interaction with OS, happening when we try to translate Fraction.jack
+# TODO: Fix do statement translation interaction with OS - find a way to discard the returned void value without checking in self.subroutines if the function's return value is void
+# TODO: Fix subroutine term translation to check what is the callee function type, not the caller (as parameter subroutine_name is used)
+# TODO: Test standard library
 
+from jackStandardLibrary import JackStandardLibrary
 import re
 import copy
 
@@ -245,11 +248,15 @@ class JackTranslatorLibraryCodeGenerator:
 
         self.translated_statements = 0
 
+        self.std_lib_init = JackStandardLibrary()
+        self.std_lib = self.std_lib_init.standard_library_formatted
+        self.std_lib_subroutines = self.std_lib_init.full_subroutine_names
+
     def translate(self):
         """
         Get class and subroutines info. Generate symbolic table for every subroutine. Start parsing every subroutine
         """
-        
+
         JackTranslatorLibraryCodeGenerator._strip_input_commands(self)
         JackTranslatorLibraryCodeGenerator._get_class_info(self)        
         JackTranslatorLibraryCodeGenerator._get_subroutines(self)
@@ -498,18 +505,20 @@ class JackTranslatorLibraryCodeGenerator:
                 statement_vm_code.append(f"label {end_label}")
 
             elif statement_type == "doStatement":
-                # We can one small trick here - this statement can be just a term
+                # We can use one small trick here - this statement can be just a term
                 statement_body = statement_declaration[2:-2]
                 statement_vm_code = JackTranslatorLibraryCodeGenerator._translate_term(self, statement_body, subroutine_name)
 
-                callee = ""
+                callee = statement_vm_code[-1].split()[-1]
 
-                if '.' in statement_vm_code[-1]:
-                    callee = statement_vm_code[-1][statement_vm_code[-1].index('.') + 1:]
+                # A lot of code went for this :D
+                if callee not in self.subroutines.keys(): # Accessing OS subroutine
+                    callee_class = callee.split('.')[0]
+                    callee_subroutine_name = callee.split('.')[1]
+
+                    callee_return_type = self.std_lib[callee_class][callee_subroutine_name][1]
                 else:
-                    callee = statement_vm_code[-1].split()[-1]
-
-                callee_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee][0][1])
+                    callee_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee][0][1])
 
                 if callee_return_type == "void":
                     # Have to find a way to discard the returned constant from void calling:
