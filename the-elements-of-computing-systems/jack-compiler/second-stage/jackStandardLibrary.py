@@ -16,7 +16,8 @@ class JackStandardLibrary:
     def __init__(self, file_name='jackStandardLibraryRaw.txt'):
         self.standard_library_raw = open(file_name, 'r').read()
         self.standard_library_formatted = JackStandardLibrary.construct_formatted_library(self.standard_library_raw)
-       
+        self.full_subroutine_names = JackStandardLibrary.construct_full_subroutine_names(self.standard_library_formatted)
+
     def construct_formatted_library(text):
         """
         Format the raw library text into segment dictionaries
@@ -45,3 +46,20 @@ class JackStandardLibrary:
             dictionary[class_name] = classified_methods_functions
 
         return dictionary
+    
+    def construct_full_subroutine_names(formatted_dict):
+        """
+        Return the full subroutine name which is: {main_key}.{current_key}
+        """
+
+        full_subroutine_names = []
+
+        for class_name, subroutines in formatted_dict.items():
+            current_full_subroutine_names = []
+
+            for subroutine_name in subroutines.keys():
+                current_full_subroutine_names.append(f"{class_name}.{subroutine_name}")
+
+            full_subroutine_names.extend(current_full_subroutine_names)
+
+        return full_subroutine_names
