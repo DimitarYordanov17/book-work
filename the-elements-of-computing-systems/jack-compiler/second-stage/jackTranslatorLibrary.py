@@ -4,6 +4,8 @@
 # TODO: Fix do statement translation interaction with OS - find a way to discard the returned void value without checking in self.subroutines if the function's return value is void
 # TODO: Fix subroutine term translation to check what is the callee function type, not the caller (as parameter subroutine_name is used)
 # TODO: Test standard library
+# TODO: Probably fixed the first two todos but I am not sure, last thing I did was trying to fix the subroutine differentiation and I probably did it, just need to test it.
+# I also started fixing other calls translation, for example in the object init function. check git diff to find out the differences
 
 from jackStandardLibrary import JackStandardLibrary
 import re
@@ -234,7 +236,7 @@ class JackTranslatorLibraryCodeGenerator:
     // to fill up instance's vm_code attribute
     """
     OPERATIONS = {  "+": "add", "-": "sub", "&": "and", "|": "or",
-                    "*": "call Math.multiply()", "/": "call Math.divide()",
+                    "*": "call Math.multiply 2", "/": "call Math.divide 2",
                     ">": "gt", "<": "lt", "=": "eq"
                 }
 
@@ -306,7 +308,7 @@ class JackTranslatorLibraryCodeGenerator:
         
         elif subroutine_kind == "constructor":
             class_variables = [x for y in list(self.class_info[1].values()) for x in y].count("field")
-            subroutine_vm_code.extend([f"push constant {class_variables}", "call Memory.alloc", "pop pointer 0"])
+            subroutine_vm_code.extend([f"push constant {class_variables}", "call Memory.alloc 1", "pop pointer 0"])
 
         subroutine_body = subroutine_declaration[subroutine_declaration.index("<statements>"):JackTranslatorLibraryCodeGenerator._get_all_occurrences(subroutine_declaration, "</statements>")[-1]] 
         statements_vm_code = JackTranslatorLibraryCodeGenerator._translate_statements(self, subroutine_body, subroutine_name)
@@ -514,6 +516,7 @@ class JackTranslatorLibraryCodeGenerator:
                     # Have to find a way to discard the returned constant from void calling:
                     # Since we know the returned value is 0, we can just simply pick a random register, push it, add the 2 values in the stack,
                     # number + 0, which is equal to number, so we pop it back onto the register, and now the stack is cleaned
+                    # (This can be done by popping into temp 0 for example, but we are not sure if the register is used)
                     statement_vm_code.extend(["push pointer 0", "add", "pop pointer 0"])
 
             elif statement_type == "ReturnStatement":
@@ -522,7 +525,7 @@ class JackTranslatorLibraryCodeGenerator:
                 
                 # Branch on function type
                 if return_type == "void":
-                    statement_vm_code.append("return 0")
+                    statement_vm_code.append("push constant 0")
                 else:
                     # Get translated return value and add it
                     expression = statement_declaration[3:-3]
@@ -531,8 +534,8 @@ class JackTranslatorLibraryCodeGenerator:
                         expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression, subroutine_name)
                         statement_vm_code.extend(expression_vm_code)
 
-                    # Add return
-                    statement_vm_code.append("return")
+                # Add return
+                statement_vm_code.append("return")
 
             else:
                 self.translated_statements -= 1
@@ -559,9 +562,11 @@ class JackTranslatorLibraryCodeGenerator:
         constructor_class = JackTranslatorLibraryParser._get_tag_value(self, expression_declaration[0])
 
         field_vars_count = list(self.subroutines[subroutine_name][1].values()).count("field")
-
+        
+        # Push the amount of memory blocks that should be allocated
+        object_initialization_vm_code.append(f"push constant {field_vars_count}")
         # Call Memory.alloc
-        object_initialization_vm_code.append(f"call Memory.alloc({field_vars_count})")
+        object_initialization_vm_code.append(f"call Memory.alloc 1")
 
         # Save into this
         object_initialization_vm_code.append("pop pointer 0")
@@ -571,7 +576,7 @@ class JackTranslatorLibraryCodeGenerator:
             object_initialization_vm_code.extend(argument_vm_command)
 
         # Call the constructor
-        object_initialization_vm_code.append(f"call {constructor_class}.new")
+        object_initialization_vm_code.append(f"call {constructor_class}.new {len(expression_list_vm_code)}")
 
         return object_initialization_vm_code
 
@@ -651,8 +656,10 @@ class JackTranslatorLibraryCodeGenerator:
             elif term_type == "keyword":
                 if term_value in ["null", "false"]:
                     term_vm_code.append("push constant 0")
-                else:
+                elif term_value == "true":
                     term_vm_code.extend(["push constant 1", "neg"])
+                else:
+                    term_vm_code.append("push pointer 0")
 
             elif term_type == "integerConstant":
                 term_vm_code.append(f"push constant {term_value}")
@@ -662,11 +669,11 @@ class JackTranslatorLibraryCodeGenerator:
                 string_length = len(term_value) - 2
 
                 # Construct a new string object
-                term_vm_code.extend([f"push constant {string_length}", "call String.new"])
+                term_vm_code.extend([f"push constant {string_length}", "call String.new 1"])
 
                 # For every char, append it to the string
                 for char in term_value:
-                    term_vm_code.extend([f"push constant {ord(char)}", "call String.appendChar"])
+                    term_vm_code.extend([f"push constant {ord(char)}", "call String.appendChar 2"])
 
         else:
             term_value = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[0])
@@ -680,15 +687,15 @@ class JackTranslatorLibraryCodeGenerator:
                 callee_subroutine_name = JackTranslatorLibraryParser._get_tag_value(self, term_declaration[2]) if next_token == '.' else term_value
                 callee = callee_class_name + '.' + callee_subroutine_name
                 
+                args_count = 0
                 subroutine_return_type = ""
 
-                outer_method = False
-
                 if not callee_class_name: # Method in current class
-                    term_vm_code.append('push this')
-                    callee_class_name = subroutine_name
+                    term_vm_code.append('push pointer 0')
+                    callee_class_name = self.class_info[0]
 
                     subroutine_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee_subroutine_name][0][1])
+                    args_count += 1
 
                 elif callee_class_name == self.class_info[0]: # Function/constructor in current class
                     subroutine_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee_subroutine_name][0][1])
@@ -708,12 +715,13 @@ class JackTranslatorLibraryCodeGenerator:
                         subroutine_return_type = self.std_lib[callee_class_name][method][1]
                     else:
                         subroutine_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee_subroutine_name][0][1])
-    
+
+                    args_count += 1
                
                 for vm_command in expression_list_vm_code:
                     term_vm_code.extend(vm_command)
 
-                args_count = len(expression_list_vm_code)
+                args_count += len(expression_list_vm_code)
                 
                 term_vm_code.append(f"call {callee_class_name}.{callee_subroutine_name} {args_count}")
                 
