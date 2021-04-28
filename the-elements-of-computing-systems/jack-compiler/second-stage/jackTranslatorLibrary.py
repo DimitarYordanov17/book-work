@@ -6,6 +6,9 @@
 # TODO: Test standard library
 # TODO: Probably fixed the first two todos but I am not sure, last thing I did was trying to fix the subroutine differentiation and I probably did it, just need to test it.
 # I also started fixing other calls translation, for example in the object init function. check git diff to find out the differences
+# TODO: Clean the get file subroutines function a bit, might make the param list the same format as the standard library is
+
+# KEEP IN MIND: There is a difference in the format of the global scope subroutine param lists and standard library param lists
 
 from jackStandardLibrary import JackStandardLibrary
 import re
@@ -46,6 +49,30 @@ class JackTranslatorLibrary:
 
         return vm_code
 
+    def get_file_subroutines(input_file_name):
+        """
+        Return a classified dictionary of all subroutines in the file and their properties
+        """
+        subroutines_lib = {}
+
+        jack_translator = JackTranslatorLibraryCodeGenerator(input_file_name)
+
+        jack_translator._strip_input_commands()
+        jack_translator._get_class_info()
+        jack_translator._get_subroutines()
+        
+        class_name = jack_translator.class_info[0]
+        subroutines_lib[class_name] = {}
+
+        for subroutine_name, subroutine_declaration in jack_translator.subroutines.items():
+            properties = subroutine_declaration[0][:subroutine_declaration[0].index("<symbol> ) </symbol>") + 1]
+  
+            subroutine_kind, subroutine_type = JackTranslatorLibraryParser._get_tag_value("", properties[0]), JackTranslatorLibraryParser._get_tag_value("", properties[1])
+            subroutine_param_list = properties[properties.index("<symbol> ( </symbol>"):] 
+
+            subroutines_lib[class_name][subroutine_name] = [subroutine_kind, subroutine_type, subroutine_param_list]
+        
+        return subroutines_lib
 
     def parse_file(input_file_name):
         """
@@ -828,7 +855,7 @@ class JackTranslatorLibraryCodeGenerator:
         """
         Find all name and declaration for subroutines and add them to self.subroutines
         """
-        
+
         subroutine_declarations = JackTranslatorLibraryCodeGenerator._get_tag_body(self, "<subroutineDec>")
 
         for subroutine_declaration in subroutine_declarations:
