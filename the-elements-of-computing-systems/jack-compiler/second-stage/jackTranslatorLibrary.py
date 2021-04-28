@@ -706,8 +706,7 @@ class JackTranslatorLibraryCodeGenerator:
                 else: # Method outside current class
                     var_name = callee_class_name
                     method = callee_subroutine_name
-                    var_properties = self.subroutines[subroutine_name][1][var_name]
-                   
+                    var_properties = JackTranslatorLibraryCodeGenerator._get_identifier(self, var_name, subroutine_name, info=True)#self.subroutines[subroutine_name][1][var_name]
                     callee_class_name = var_properties[0]
                     term_vm_code.extend([f"push {var_properties[1]} {var_properties[2]}"])
                     
@@ -800,16 +799,19 @@ class JackTranslatorLibraryCodeGenerator:
         return expression_list_vm_code
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~ Auxiliary translation ~~~~~~~~~~~~~~~~~~~~~~~
-    def _get_identifier(self, identifier, subroutine_name):
+    def _get_identifier(self, identifier, subroutine_name, info=False):
         """
-        Return the correct identifier properties, handle scoping
+        Return the correct identifier properties, handle scoping. If info, return the identifier variable - properties
         """
 
         try: # Search for the identifier declaration in current scope
             identifier = self.subroutines[subroutine_name][1][identifier]
-        except KeyError: # Search in global scope
+        except KeyError: # Search in class scope
             identifier = self.class_info[1][identifier]
         
+        if info:
+            return identifier
+
         identifier_type, identifier_kind, identifier_count = identifier[0], identifier[1], identifier[2]
         identifier_segment = identifier_kind
         
