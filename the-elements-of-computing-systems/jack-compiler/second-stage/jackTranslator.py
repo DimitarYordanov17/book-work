@@ -19,16 +19,17 @@ class JackTranslator:
         """
        
         jack_files = []
-        
+        global_scope_subroutines = {}
+
         if ".jack" in path: # Single file
             jack_files.append(path)
 
         else:
             for root, dirs, files in os.walk(path):
                 for file_name in files:
-                    if ".jack" in file_name:
+                    if file_name.endswith(".jack"):
                       jack_files.append(file_name)
-        
+
         for jack_full_file_name in jack_files:
             jack_file_name = jack_full_file_name.split(".")[0]
 
@@ -37,10 +38,13 @@ class JackTranslator:
 
             JackTranslator._generate_xml(jack_full_file_name, tabularize=False)
 
-            vm_code = JackTranslatorLibrary.translate_file(jack_xml_file_name) 
-           
+            vm_code = JackTranslatorLibrary.translate_file(jack_xml_file_name)
+
+            file_subroutines = JackTranslatorLibrary.get_file_subroutines(jack_xml_file_name)
+            global_scope_subroutines.update(file_subroutines)
+
             JackTranslatorLibrary.tabularize(jack_xml_file_name)
-            
+
             if not generate_xml:
                 os.system(f"rm {jack_xml_file_name}")
  
@@ -49,7 +53,7 @@ class JackTranslator:
                     output_file.write(line)
 
                 output_file.truncate()
-        
+     
     def _generate_xml(input_file_name, tabularize=True):
         """
         Parses a single .jack file, resulting in a .xml file
@@ -57,7 +61,6 @@ class JackTranslator:
 
         output_file_name = input_file_name.split(".")[0] + ".xml"
         os.system(f"cp {input_file_name} {output_file_name}")
-
         JackTranslatorLibrary.clean(output_file_name)
         JackTranslatorLibrary.tokenize(output_file_name)
 
