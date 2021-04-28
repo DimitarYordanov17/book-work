@@ -1132,7 +1132,8 @@ class JackTranslatorLibraryParser:
 
         self.tokens.insert(self.row_pointer, tag)
         self.row_pointer += 1
-
+        
+       
         current_token = JackTranslatorLibraryParser._get_tag_value(self, self.tokens[self.row_pointer])
         current_token_full = self.tokens[self.row_pointer]
 
@@ -1157,8 +1158,19 @@ class JackTranslatorLibraryParser:
 
             elif current_token == "return":
                 JackTranslatorLibraryParser._parse_return(self)
+
+                current_token = JackTranslatorLibraryParser._get_tag_value(self, self.tokens[self.row_pointer])
+                next_token = JackTranslatorLibraryParser._get_tag_value(self, self.tokens[self.row_pointer + 1])
                 self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, statement_tag))
-                self.row_pointer += 2
+
+                # Find out if this is an ending subroutine declaration return
+                if next_token in ["function", "method", "constructor", "</class>\n"]: # Ending statement
+                    self.row_pointer += 2
+                else:
+                    self.row_pointer += 1
+                
+                # It is meaningless to have statements after the current return, so we just skip them
+                # WARNING: The program might break if you try to parse statements in the current statements block after a return
                 break
 
             self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, statement_tag))
@@ -1166,6 +1178,14 @@ class JackTranslatorLibraryParser:
 
             current_token = JackTranslatorLibraryParser._get_tag_value(self, self.tokens[self.row_pointer])
             current_token_full = self.tokens[self.row_pointer]
+
+            if current_token == "}": # In case we don't have a return
+                next_token = JackTranslatorLibraryParser._get_tag_value(self, self.tokens[self.row_pointer + 1])
+
+                if next_token in ["function", "method", "constructor", "</class>\n"]: # Ending subroutine declaration statement
+                    self.row_pointer += 1
+
+                break
 
         self.tokens.insert(self.row_pointer, JackTranslatorLibraryParser._get_closed_tag(self, tag))
         self.row_pointer += 1
