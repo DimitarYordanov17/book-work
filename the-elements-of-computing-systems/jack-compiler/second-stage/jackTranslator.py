@@ -29,19 +29,24 @@ class JackTranslator:
                 for file_name in files:
                     if file_name.endswith(".jack"):
                       jack_files.append(file_name)
+        
+        # Construct global scope subroutines table and create xml files
+        for jack_full_file_name in jack_files:
+            jack_xml_file_name = jack_full_file_name.split(".")[0] + ".xml"
 
+            JackTranslator._generate_xml(jack_full_file_name, tabularize=False)
+             
+            file_subroutines = JackTranslatorLibrary.get_file_subroutines(jack_xml_file_name)
+            global_scope_subroutines.update(file_subroutines)
+
+        # Translate each file
         for jack_full_file_name in jack_files:
             jack_file_name = jack_full_file_name.split(".")[0]
 
             output_file_name = jack_file_name + ".vm"
             jack_xml_file_name = jack_file_name + ".xml"
-
-            JackTranslator._generate_xml(jack_full_file_name, tabularize=False)
-
-            vm_code = JackTranslatorLibrary.translate_file(jack_xml_file_name)
-
-            file_subroutines = JackTranslatorLibrary.get_file_subroutines(jack_xml_file_name)
-            global_scope_subroutines.update(file_subroutines)
+          
+            vm_code = JackTranslatorLibrary.translate_file(jack_xml_file_name, global_scope_subroutines)
 
             JackTranslatorLibrary.tabularize(jack_xml_file_name)
 
@@ -53,7 +58,7 @@ class JackTranslator:
                     output_file.write(line)
 
                 output_file.truncate()
-     
+
     def _generate_xml(input_file_name, tabularize=True):
         """
         Parses a single .jack file, resulting in a .xml file
