@@ -39,12 +39,12 @@ class JackTranslatorLibrary:
                      'if', 'else', 'while', 'return'],
     }
 
-    def translate_file(input_file_name):
+    def translate_file(input_file_name, global_scope_subroutines):
         """
         Handle the translation of a file
         """
                 
-        jack_translator = JackTranslatorLibraryCodeGenerator(input_file_name)
+        jack_translator = JackTranslatorLibraryCodeGenerator(input_file_name, global_scope_subroutines)
         vm_code = jack_translator.translate()
 
         return vm_code
@@ -55,7 +55,7 @@ class JackTranslatorLibrary:
         """
         subroutines_lib = {}
 
-        jack_translator = JackTranslatorLibraryCodeGenerator(input_file_name)
+        jack_translator = JackTranslatorLibraryCodeGenerator(input_file_name, []) # Initialize with an empty global subroutines array
 
         jack_translator._strip_input_commands()
         jack_translator._get_class_info()
@@ -267,10 +267,12 @@ class JackTranslatorLibraryCodeGenerator:
                     ">": "gt", "<": "lt", "=": "eq"
                 }
 
-    def __init__(self, input_file_name):
+    def __init__(self, input_file_name, global_scope_subroutines):
         self.input_commands = open(input_file_name, 'r').readlines()
         self.symbolic_table = []
         self.vm_code = []
+
+        self.global_subroutines = global_scope_subroutines
 
         self.subroutines = {}
         self.class_info = []
@@ -285,7 +287,7 @@ class JackTranslatorLibraryCodeGenerator:
         """
         Get class and subroutines info. Generate symbolic table for every subroutine. Start parsing every subroutine
         """
-
+        
         JackTranslatorLibraryCodeGenerator._strip_input_commands(self)
         JackTranslatorLibraryCodeGenerator._get_class_info(self)        
         JackTranslatorLibraryCodeGenerator._get_subroutines(self)
@@ -739,8 +741,13 @@ class JackTranslatorLibraryCodeGenerator:
                     
                     if callee_class_name in self.std_lib.keys():
                         subroutine_return_type = self.std_lib[callee_class_name][method][1]
-                    else:
+                    elif callee_class_name in self.subroutines.keys():
                         subroutine_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee_subroutine_name][0][1])
+                    else:
+                        outside_class = self.global_subroutines[callee_class_name]
+                        outside_subroutine_properties = outside_class[method]
+
+                        subroutine_return_type = outside_subroutine_properties[1]
 
                     args_count += 1
                
