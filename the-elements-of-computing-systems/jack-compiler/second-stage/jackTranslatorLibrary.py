@@ -405,7 +405,6 @@ class JackTranslatorLibraryCodeGenerator:
                 # Construct statement code
                 if array_indexing:
                     identifier_expression_declaration  = statement_declaration[5:statement_declaration.index("<symbol> = </symbol>") - 2]
-                    print(identifier_expression_declaration)
                     identifier_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, identifier_expression_declaration, subroutine_name)
 
                     # Calculate identifier address
