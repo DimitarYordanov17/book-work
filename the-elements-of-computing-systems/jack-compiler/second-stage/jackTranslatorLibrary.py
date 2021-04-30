@@ -705,7 +705,7 @@ class JackTranslatorLibraryCodeGenerator:
 
             elif term_type == "stringConstant":
                 # WARNING: Not fully tested
-                string_length = len(term_value) - 2
+                string_length = len(term_value)
 
                 # Construct a new string object
                 term_vm_code.extend([f"push constant {string_length}", "call String.new 1"])
@@ -1477,6 +1477,14 @@ class JackTranslatorLibraryParser:
         Returns mediocre keyword
         """
         try:
-            return tag.split()[1]
+            splitted_tag = tag.split()
+
+            tag_type = splitted_tag[0]
+
+            if tag_type == "<stringConstant>":
+                tag_part = tag[tag.index(">") + 3:]
+                return tag_part[:tag_part.index("<") - 2]
+            else:
+                return splitted_tag[1]
         except:
             return tag
