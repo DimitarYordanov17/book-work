@@ -728,7 +728,6 @@ class JackTranslatorLibraryCodeGenerator:
                 
                 args_count = 0
                 subroutine_return_type = ""
-     
                 if not callee_class_name: # Method in current class
                     term_vm_code.append('push pointer 0')
                     callee_class_name = self.class_info[0]
@@ -740,7 +739,7 @@ class JackTranslatorLibraryCodeGenerator:
                     subroutine_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee_subroutine_name][0][1])
 
                 else: # Accessing outside current_class
-                    
+
                     if callee_class_name in self.subroutines[subroutine_name][1].keys() or callee_class_name in self.class_info[1].keys(): # Method accessing outside current class 
                         var_name = callee_class_name
                         method = callee_subroutine_name
@@ -759,13 +758,12 @@ class JackTranslatorLibraryCodeGenerator:
 
                             subroutine_return_type = outside_subroutine_properties[1]
 
+                        args_count += 1
                     else: # Function/constructor accessing outside current class
                         if callee_class_name in self.std_lib.keys(): # Function/constructor in stdlib
                             subroutine_return_type = self.std_lib[callee_class_name][callee_subroutine_name][1]
                         else: # Function/constructor in global scope
                             subroutine_return_type = self.global_subroutines[callee_class_name][callee_subroutine_name][1]
-
-                    args_count += 1
                
                 for vm_command in expression_list_vm_code:
                     term_vm_code.extend(vm_command)
