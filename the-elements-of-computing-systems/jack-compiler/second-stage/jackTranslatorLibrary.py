@@ -7,6 +7,7 @@
 # TODO: Probably fixed the first two todos but I am not sure, last thing I did was trying to fix the subroutine differentiation and I probably did it, just need to test it.
 # I also started fixing other calls translation, for example in the object init function. check git diff to find out the differences
 # TODO: Clean the get file subroutines function a bit, might make the param list the same format as the standard library is
+# TODO: Rename global to file
 
 # KEEP IN MIND: There is a difference in the format of the global scope subroutine param lists and standard library param lists
 
@@ -262,6 +263,7 @@ class JackTranslatorLibraryCodeGenerator:
     // subroutine and we translate it to VM code, using its own symbolic table. To translate the file means
     // to fill up instance's vm_code attribute
     """
+
     OPERATIONS = {  "+": "add", "-": "sub", "&": "and", "|": "or",
                     "*": "call Math.multiply 2", "/": "call Math.divide 2",
                     ">": "gt", "<": "lt", "=": "eq"
@@ -273,6 +275,7 @@ class JackTranslatorLibraryCodeGenerator:
         self.vm_code = []
 
         self.global_subroutines = global_scope_subroutines
+        self.global_identifiers = self._get_global_subroutine_identifiers()
 
         self.subroutines = {}
         self.class_info = []
@@ -282,12 +285,14 @@ class JackTranslatorLibraryCodeGenerator:
         self.std_lib_init = JackStandardLibrary()
         self.std_lib = self.std_lib_init.standard_library_formatted
         self.std_lib_subroutines = self.std_lib_init.full_subroutine_names
-
+        
     def translate(self):
         """
         Get class and subroutines info. Generate symbolic table for every subroutine. Start parsing every subroutine
         """
-        
+        self.not_class_subroutines_lib = self.global_subroutines
+        self.not_class_subroutines_lib.update(self.std_lib)
+
         JackTranslatorLibraryCodeGenerator._strip_input_commands(self)
         JackTranslatorLibraryCodeGenerator._get_class_info(self)        
         JackTranslatorLibraryCodeGenerator._get_subroutines(self)
@@ -399,7 +404,8 @@ class JackTranslatorLibraryCodeGenerator:
 
                 # Construct statement code
                 if array_indexing:
-                    identifier_expression_declaration  = statement_declaration[5:statement_declaration.index("</expression>")]
+                    identifier_expression_declaration  = statement_declaration[5:statement_declaration.index("<symbol> = </symbol>") - 2]
+                    print(identifier_expression_declaration)
                     identifier_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, identifier_expression_declaration, subroutine_name)
 
                     # Calculate identifier address
@@ -410,7 +416,7 @@ class JackTranslatorLibraryCodeGenerator:
                     # Pop into that
                     statement_vm_code.append("pop pointer 1")
 
-                    # Push expression value
+                    # Push expression valueb1
                     statement_vm_code.extend(expression_vm_code)
 
                     # Pop into the desired address
@@ -582,10 +588,12 @@ class JackTranslatorLibraryCodeGenerator:
         """
 
         object_initialization_vm_code = []
+        expression_list_vm_code = []
 
-        # Get arguments translation
-        expression_list = expression_declaration[expression_declaration.index("<expressionList>") + 1: -3]
-        expression_list_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression_list(self, expression_list, subroutine_name)
+        # Get arguments translation if any
+        if "<expressionList>" in expression_declaration:
+            expression_list = expression_declaration[expression_declaration.index("<expressionList>") + 1: -3]
+            expression_list_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression_list(self, expression_list, subroutine_name)
 
         # Find out how much memory should be allocated
         constructor_class = JackTranslatorLibraryParser._get_tag_value(self, expression_declaration[0])
@@ -609,13 +617,13 @@ class JackTranslatorLibraryCodeGenerator:
 
         return object_initialization_vm_code
 
+
     def _translate_expression(self, expression_declaration, subroutine_name):
         """
         Translate a sequence of terms to VM code.
         /* KEEP IN MIND: Operator priority is not defined by the language, except that expressions in parentheses are evaluated first.
         Thus an expression like 2+3*4 may yield either 20 or 14, whereas 2+(3*4) is guaranteed to yield 14.*/
         """
-
         expression_vm_code = []
 
         # Terms and operations will keep differentiated structures
@@ -651,8 +659,11 @@ class JackTranslatorLibraryCodeGenerator:
             terms_vm.append(JackTranslatorLibraryCodeGenerator._translate_term(self, term, subroutine_name))
 
         # Construct expression VM code
-        expression_vm_code.extend(terms_vm[0])
-
+        try:
+            expression_vm_code.extend(terms_vm[0])
+        except:
+            print(expression_declaration, subroutine_name, terms)
+            exit()
         if len(terms_vm) > 1:
             expression_vm_code.extend(terms_vm[1])
 
@@ -718,7 +729,7 @@ class JackTranslatorLibraryCodeGenerator:
                 
                 args_count = 0
                 subroutine_return_type = ""
-
+     
                 if not callee_class_name: # Method in current class
                     term_vm_code.append('push pointer 0')
                     callee_class_name = self.class_info[0]
@@ -729,25 +740,31 @@ class JackTranslatorLibraryCodeGenerator:
                 elif callee_class_name == self.class_info[0]: # Function/constructor in current class
                     subroutine_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee_subroutine_name][0][1])
 
-                elif callee in self.std_lib_subroutines and self.std_lib[callee_class_name][callee_subroutine_name][0] != 'method': # Function/constructor outside current class 
-                    subroutine_return_type = self.std_lib[callee_class_name][callee_subroutine_name][1]
-
-                else: # Method outside current class
-                    var_name = callee_class_name
-                    method = callee_subroutine_name
-                    var_properties = JackTranslatorLibraryCodeGenerator._get_identifier(self, var_name, subroutine_name, info=True)#self.subroutines[subroutine_name][1][var_name]
-                    callee_class_name = var_properties[0]
-                    term_vm_code.extend([f"push {var_properties[1]} {var_properties[2]}"])
+                else: # Accessing outside current_class
                     
-                    if callee_class_name in self.std_lib.keys():
-                        subroutine_return_type = self.std_lib[callee_class_name][method][1]
-                    elif callee_class_name in self.subroutines.keys():
-                        subroutine_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee_subroutine_name][0][1])
-                    else:
-                        outside_class = self.global_subroutines[callee_class_name]
-                        outside_subroutine_properties = outside_class[method]
+                    if callee_class_name in self.subroutines[subroutine_name][1].keys() or callee_class_name in self.class_info[1].keys(): # Method accessing outside current class 
+                        var_name = callee_class_name
+                        method = callee_subroutine_name
+                        var_properties = JackTranslatorLibraryCodeGenerator._get_identifier(self, var_name, subroutine_name, info=True)
+               
+                        callee_class_name = var_properties[0]
+                        term_vm_code.extend([f"push {var_properties[1]} {var_properties[2]}"])
+                    
+                        if callee_class_name in self.std_lib.keys():
+                            subroutine_return_type = self.std_lib[callee_class_name][method][1]
+                        elif callee_class_name in self.subroutines.keys():
+                            subroutine_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee_subroutine_name][0][1])
+                        else:
+                            outside_class = self.global_subroutines[callee_class_name]
+                            outside_subroutine_properties = outside_class[method]
 
-                        subroutine_return_type = outside_subroutine_properties[1]
+                            subroutine_return_type = outside_subroutine_properties[1]
+
+                    else: # Function/constructor accessing outside current class
+                        if callee_class_name in self.std_lib.keys(): # Function/constructor in stdlib
+                            subroutine_return_type = self.std_lib[callee_class_name][callee_subroutine_name][1]
+                        else: # Function/constructor in global scope
+                            subroutine_return_type = self.global_subroutines[callee_class_name][callee_subroutine_name][1]
 
                     args_count += 1
                
@@ -837,9 +854,10 @@ class JackTranslatorLibraryCodeGenerator:
         """
         Return the correct identifier properties, handle scoping. If info, return the identifier variable - properties
         """
-
+        
         try: # Search for the identifier declaration in current scope
             identifier = self.subroutines[subroutine_name][1][identifier]
+            
         except KeyError: # Search in class scope
             identifier = self.class_info[1][identifier]
         
@@ -1007,6 +1025,19 @@ class JackTranslatorLibraryCodeGenerator:
 
         return index_list
 
+    def _get_global_subroutine_identifiers(self):
+        """
+        Construct global scope subroutine identifiers
+        """
+
+        identifiers = []
+        
+        if str(type(self.global_subroutines)) == "<class 'dict'>":
+            for class_name, subroutine_declarations in self.global_subroutines.items():
+                for subroutine_name in subroutine_declarations.keys():
+                    identifiers.append(f"{class_name}.{subroutine_name}")
+
+        return identifiers
 
 class JackTranslatorLibraryParser:
     """
