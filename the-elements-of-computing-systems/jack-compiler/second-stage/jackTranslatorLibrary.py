@@ -540,12 +540,8 @@ class JackTranslatorLibraryCodeGenerator:
                 statement_vm_code = JackTranslatorLibraryCodeGenerator._translate_term(self, statement_body, subroutine_name, statement='do')
                 callee_return_type = statement_vm_code.pop()
       
-                if callee_return_type == "void":
-                    # Have to find a way to discard the returned constant from void calling:
-                    # Since we know the returned value is 0, we can just simply pick a random register, push it, add the 2 values in the stack,
-                    # number + 0, which is equal to number, so we pop it back onto the register, and now the stack is cleaned
-                    # (This can be done by popping into temp 0 for example, but we are not sure if the register is used)
-                    statement_vm_code.extend(["push pointer 0", "add", "pop pointer 0"])
+                if callee_return_type == "void": # Discard the returned value from a void subroutine
+                    statement_vm_code.append("pop temp 0")
 
             elif statement_type == "ReturnStatement":
                 # Get return type
