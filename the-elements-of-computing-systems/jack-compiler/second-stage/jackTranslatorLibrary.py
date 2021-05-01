@@ -581,7 +581,7 @@ class JackTranslatorLibraryCodeGenerator:
 
         # Get arguments translation if any
         if "<expressionList>" in expression_declaration:
-            expression_list = expression_declaration[expression_declaration.index("<expressionList>") + 1: -3]
+            expression_list = expression_declaration[expression_declaration.index("<expressionList>") + 1: -2]
             expression_list_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression_list(self, expression_list, subroutine_name)
 
         # Find out how much memory should be allocated
