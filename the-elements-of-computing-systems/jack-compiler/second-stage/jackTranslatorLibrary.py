@@ -389,15 +389,9 @@ class JackTranslatorLibraryCodeGenerator:
 
                 # Get expression declaration
                 expression_declaration = statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 2:-3]
-
-                # Check if we have a object initialization
-                initializing_object = JackTranslatorLibraryParser._get_tag_value(self, statement_declaration[statement_declaration.index("<symbol> = </symbol>") + 5]) == "new"
-
-                # Translate expression or object initalization
-                if initializing_object:
-                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_object_initialization(self, expression_declaration[1:], subroutine_name)
-                else:
-                    expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression_declaration, subroutine_name)
+                
+                # Translate the expression
+                expression_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression(self, expression_declaration, subroutine_name)
 
                 # Check if we our identifier is an array
                 array_indexing = JackTranslatorLibraryParser._get_tag_value(self, statement_declaration[3]) == "["
@@ -412,14 +406,14 @@ class JackTranslatorLibraryCodeGenerator:
                     statement_vm_code.extend(identifier_vm_code)
                     statement_vm_code.append("add")
 
-                    # Pop into that
-                    statement_vm_code.append("pop pointer 1")
-
-                    # Push expression valueb1
+                    # Push expression value
                     statement_vm_code.extend(expression_vm_code)
 
-                    # Pop into the desired address
-                    statement_vm_code.append("pop that 0")
+                    # Pop the expression value into a temp register and the identifier address into pointer 0
+                    statement_vm_code.extend(["pop temp 0", "pop pointer 1"])
+
+                    # Pop the expression value into the desired address
+                    statement_vm_code.extend(["push temp 0", "pop that 0"])
 
                 else:
                     # Push expression value
@@ -728,6 +722,21 @@ class JackTranslatorLibraryCodeGenerator:
                 
                 args_count = 0
                 subroutine_return_type = ""
+            
+                # Check if we have a constructor
+                try:
+                    is_constructor = self.not_class_subroutines_lib[callee_class_name][callee_subroutine_name][0] == "constructor"
+                except:
+                    is_constructor = self.subroutines[callee_subroutine_name][0][0] == "<keyword> constructor </keyword>"
+                
+                if is_constructor:
+                    term_vm_code = JackTranslatorLibraryCodeGenerator._translate_object_initialization(self, term_declaration, subroutine_name)
+
+                    if statement == 'do':
+                        term_vm_code.append(subroutine_return_type)
+
+                    return term_vm_code
+
                 if not callee_class_name: # Method in current class
                     term_vm_code.append('push pointer 0')
                     callee_class_name = self.class_info[0]
@@ -739,7 +748,6 @@ class JackTranslatorLibraryCodeGenerator:
                     subroutine_return_type = JackTranslatorLibraryParser._get_tag_value(self, self.subroutines[callee_subroutine_name][0][1])
 
                 else: # Accessing outside current_class
-
                     if callee_class_name in self.subroutines[subroutine_name][1].keys() or callee_class_name in self.class_info[1].keys(): # Method accessing outside current class 
                         var_name = callee_class_name
                         method = callee_subroutine_name
