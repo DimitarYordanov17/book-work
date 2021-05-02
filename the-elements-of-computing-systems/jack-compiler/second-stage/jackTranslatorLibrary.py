@@ -569,44 +569,6 @@ class JackTranslatorLibraryCodeGenerator:
 
         return statements_vm_code
 
-    # ~~~~~~~~~~~~~~~~~~~~~~~~ Fundamental translation ~~~~~~~~~~~~~~~~~~~~~~~~
-    def _translate_object_initialization(self, expression_declaration, subroutine_name):
-        """
-        Get the vm code for object init
-        /* WARNING: Not fully tested */
-        """
-
-        object_initialization_vm_code = []
-        expression_list_vm_code = []
-
-        # Get arguments translation if any
-        if "<expressionList>" in expression_declaration:
-            expression_list = expression_declaration[expression_declaration.index("<expressionList>") + 1: -2]
-            expression_list_vm_code = JackTranslatorLibraryCodeGenerator._translate_expression_list(self, expression_list, subroutine_name)
-
-        # Find out how much memory should be allocated
-        constructor_class = JackTranslatorLibraryParser._get_tag_value(self, expression_declaration[0])
-
-        field_vars_count = list(self.subroutines[subroutine_name][1].values()).count("field")
-        
-        # Push the amount of memory blocks that should be allocated
-        object_initialization_vm_code.append(f"push constant {field_vars_count}")
-        # Call Memory.alloc
-        object_initialization_vm_code.append(f"call Memory.alloc 1")
-
-        # Save into this
-        object_initialization_vm_code.append("pop pointer 0")
-
-        # Add translated arguments
-        for argument_vm_command in expression_list_vm_code:
-            object_initialization_vm_code.extend(argument_vm_command)
-
-        # Call the constructor
-        object_initialization_vm_code.append(f"call {constructor_class}.new {len(expression_list_vm_code)}")
-
-        return object_initialization_vm_code
-
-
     def _translate_expression(self, expression_declaration, subroutine_name):
         """
         Translate a sequence of terms to VM code.
@@ -648,11 +610,11 @@ class JackTranslatorLibraryCodeGenerator:
             terms_vm.append(JackTranslatorLibraryCodeGenerator._translate_term(self, term, subroutine_name))
 
         # Construct expression VM code
-        try:
-            expression_vm_code.extend(terms_vm[0])
-        except:
-            print(expression_declaration, subroutine_name, terms)
-            exit()
+
+        expression_vm_code.extend(terms_vm[0])
+
+
+
         if len(terms_vm) > 1:
             expression_vm_code.extend(terms_vm[1])
 
@@ -717,31 +679,8 @@ class JackTranslatorLibraryCodeGenerator:
                 callee = callee_class_name + '.' + callee_subroutine_name
                 
                 args_count = 0
-                subroutine_return_type = "CONSTRUCTOR" # Start with some default value and eventually change it
+                subroutine_return_type = "NONE" # Start with some default value and eventually change it
             
-                # Check if we have a constructor
-                try:
-                    if callee_class_name in self.subroutines[subroutine_name][1].keys() or callee_class_name in self.class_info[1].keys():
-                        var_name = callee_class_name
-                        method = callee_subroutine_name
-                        var_properties = JackTranslatorLibraryCodeGenerator._get_identifier(self, var_name, subroutine_name, info=True)
-               
-                        temp_callee_class_name = var_properties[0]
-                    else:
-                        temp_callee_class_name = callee_class_name
-                    
-                    is_constructor = self.not_class_subroutines_lib[temp_callee_class_name][callee_subroutine_name][0] == "constructor"
-                except:
-                    is_constructor = self.subroutines[callee_subroutine_name][0][0] == "<keyword> constructor </keyword>"
-                
-                if is_constructor:
-                    term_vm_code = JackTranslatorLibraryCodeGenerator._translate_object_initialization(self, term_declaration, subroutine_name)
-
-                    if statement == 'do':
-                        term_vm_code.append(subroutine_return_type)
-
-                    return term_vm_code
-
                 if not callee_class_name: # Method in current class
                     term_vm_code.append('push pointer 0')
                     callee_class_name = self.class_info[0]
@@ -772,6 +711,7 @@ class JackTranslatorLibraryCodeGenerator:
                             subroutine_return_type = outside_subroutine_properties[1]
 
                         args_count += 1
+
                     else: # Function/constructor accessing outside current class
                         if callee_class_name in self.std_lib.keys(): # Function/constructor in stdlib
                             subroutine_return_type = self.std_lib[callee_class_name][callee_subroutine_name][1]
