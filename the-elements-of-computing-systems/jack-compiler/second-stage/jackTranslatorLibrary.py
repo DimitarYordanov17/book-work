@@ -717,7 +717,7 @@ class JackTranslatorLibraryCodeGenerator:
                 callee = callee_class_name + '.' + callee_subroutine_name
                 
                 args_count = 0
-                subroutine_return_type = ""
+                subroutine_return_type = "CONSTRUCTOR" # Start with some default value and eventually change it
             
                 # Check if we have a constructor
                 try:
