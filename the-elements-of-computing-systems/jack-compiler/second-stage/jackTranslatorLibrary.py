@@ -698,7 +698,7 @@ class JackTranslatorLibraryCodeGenerator:
                         var_properties = JackTranslatorLibraryCodeGenerator._get_identifier(self, var_name, subroutine_name, info=True)
                
                         callee_class_name = var_properties[0]
-                        term_vm_code.extend([f"push {'local' if var_properties[1] == 'var' else var_properties[1]} {var_properties[2]}"])
+                        term_vm_code.extend([f"push {'local' if var_properties[1] == 'var' else ('this' if var_properties[1] == 'field' else var_properties[1])} {var_properties[2]}"])
                     
                         if callee_class_name in self.std_lib.keys():
                             subroutine_return_type = self.std_lib[callee_class_name][method][1]
