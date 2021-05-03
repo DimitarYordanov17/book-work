@@ -1,4 +1,4 @@
-# A jack translator (front-end). Jack code to Intermediate code. @DimitarYordanov17
+# A jack translator (front-end). Jack code to Intermediate (VM) code. @DimitarYordanov17
 
 # To run: python3 jackTranslator.py {path} {generate corresponding XML files, yes/no}
 
@@ -9,7 +9,7 @@ import sys
 
 class JackTranslator:
     """
-    Main class, capable of processing a full directory, with .jack files, resulting in corresponding .vm files files
+    Main class, capable of translating/parsing a full directory, with .jack files, resulting in corresponding .vm files and eventually .xml files
     """
 
 
