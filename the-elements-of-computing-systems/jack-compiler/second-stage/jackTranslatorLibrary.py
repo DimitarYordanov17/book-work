@@ -1,15 +1,4 @@
-# An intermediate code library for the Jack > Intermediate code translation. @DimitarYordanov17
-
-# WARNING: Might have errors: object initialization, expression list parsing, string translation, difference between array init and object init, return and do
-# TODO: Fix do statement translation interaction with OS - find a way to discard the returned void value without checking in self.subroutines if the function's return value is void
-# TODO: Fix subroutine term translation to check what is the callee function type, not the caller (as parameter subroutine_name is used)
-# TODO: Test standard library
-# TODO: Probably fixed the first two todos but I am not sure, last thing I did was trying to fix the subroutine differentiation and I probably did it, just need to test it.
-# I also started fixing other calls translation, for example in the object init function. check git diff to find out the differences
-# TODO: Clean the get file subroutines function a bit, might make the param list the same format as the standard library is
-# TODO: Rename global to file
-
-# KEEP IN MIND: There is a difference in the format of the global scope subroutine param lists and standard library param lists
+# An intermediate code library for the Jack > Intermediate (VM) code translation. @DimitarYordanov17
 
 from jackStandardLibrary import JackStandardLibrary
 import re
@@ -101,7 +90,7 @@ class JackTranslatorLibrary:
 
             # Clean spaces, without breaking the string
             # BTW I spent too much time on this but in the end I see that
-            # I could use regex techniques for the entire compiler...
+            # I could use regex for the entire compiler...
             # If I find time to rework the whole thing, I might find a way
             # to do it with regexes for optimization.
             # All the added complexity is here just so I can parse strings the correct way.
@@ -260,7 +249,7 @@ class JackTranslatorLibraryCodeGenerator:
     // We have a basic initialization where each instance contains input_commands (all the XML tags) and
     // subroutines (a dictionary - subroutine_name: [subroutine_declaration, subroutine_symbolic_table, vm_code]).
     // Next, we translate all the class information (class variables...). After that we go through every
-    // subroutine and we translate it to VM code, using its own symbolic table. To translate the file means
+    // subroutine and we translate it into VM code, using its own symbolic table. Technically to translate a file means
     // to fill up instance's vm_code attribute
     """
 
@@ -270,6 +259,7 @@ class JackTranslatorLibraryCodeGenerator:
                 }
 
     def __init__(self, input_file_name, global_scope_subroutines):
+        # KEEP IN MIND: There is a difference in the format of the global scope subroutine param lists and standard library param lists.
         self.input_commands = open(input_file_name, 'r').readlines()
         self.symbolic_table = []
         self.vm_code = []
@@ -312,10 +302,6 @@ class JackTranslatorLibraryCodeGenerator:
             vm_code.extend(indented_vm_code)
 
         return vm_code
-
-        # \/ Print subroutines for testing \/
-        #for subroutine_name, properties in self.subroutines.items():
-        #    print(f"{subroutine_name}:\n{properties[1]}\n{properties[2]}\n")
 
     def _translate_subroutine(self, subroutine_name):
         """
