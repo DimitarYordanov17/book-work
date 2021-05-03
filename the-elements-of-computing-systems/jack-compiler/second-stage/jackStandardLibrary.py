@@ -7,10 +7,13 @@ class JackStandardLibrary:
     Main class to work with
 
     Standard library raw:
-    Raw text from the book
+    Raw text and data from the book
 
     Standard library formatted:
-    class_name: {subroutine_name1: [subroutine_kind, subroutine_type, subroutine_parameter_list], subroutine_name2: [subroutine_kind, subroutine_type, subroutine_parameter_list]}
+    {class_name: {subroutine_name1: [subroutine_kind, subroutine_type, subroutine_parameter_list], subroutine_name2: [subroutine_kind, subroutine_type, subroutine_parameter_list]}}
+
+    Full subroutine names:
+    [class_name1.subroutine_name1, class_name1.subroutine_name2..., class_name2.subroutine_name1, class_name2.subroutine_name2...]
     """
     
     def __init__(self, file_name='jackStandardLibraryRaw.txt'):
@@ -20,7 +23,7 @@ class JackStandardLibrary:
 
     def construct_formatted_library(text):
         """
-        Format the raw library text into segment dictionaries
+        Format the raw library text into class segments dictionaries
         """
         
         dictionary = {}
