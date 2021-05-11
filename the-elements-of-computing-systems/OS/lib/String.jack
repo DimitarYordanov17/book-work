@@ -10,55 +10,236 @@
  * for appending a character to the string's end, and more typical
  * string-oriented operations.
  */
+
 class String {
+    field int str_base;
+    field int str_ptr;
+    field int str_len;
 
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
-    constructor String new(int maxLength) {
+    constructor String new(int maxLength) { // Probably add if 0 make it 1
+        var int length;
+        let length = maxLength;
+
+        if (maxLength = 0) {
+            let length = 1;
+        }
+        
+        let str_len = 0;
+        let str_base = Memory.alloc(length);
+        let str_ptr = str_base;
+
+        return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
+        return; // It expects an Array and we don't have an array
     }
 
     /** Returns the current length of this string. */
     method int length() {
+        return str_len;
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
+        return Memory.peek(str_base + j);
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
+        do Memory.poke(str_base + j, c);
+        return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
+        do Memory.poke(str_ptr, c);
+        let str_ptr = str_ptr + 1;
+        let str_len = str_len + 1;
+
+        return this;
     }
+
+    function int is_digit(char c) {
+        return ~(c < 48) & ~(c > 57);
+    }
+
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
+        let str_ptr = str_ptr - 1;
+        let str_len = str_len - 1;
+
+        return;
     }
 
     /** Returns the integer value of this string, 
      *  until a non-digit character is detected. */
     method int intValue() {
+        var int return_value, sin_ptr, temp_ptr, counter, significance, int_len;
+        var bool is_negative, is_curr_digit;
+        var char c;
+
+        let is_negative = (Memory.peek(str_base) = 45);
+
+        let return_value = 0;
+
+        // Get significance
+        let significance = 1;
+        let is_curr_digit = true;
+        let sin_ptr = str_base;
+        let int_len = 0;
+
+        if (is_negative) {
+            let sin_ptr = sin_ptr + 1;
+        }
+
+        while (is_curr_digit) {
+            let c = Memory.peek(sin_ptr);
+            let is_curr_digit = String.is_digit(c);
+
+            if (is_curr_digit) {
+                let significance = significance * 10;
+            } else {
+                let significance = significance / 10;
+
+                if (is_negative) {
+                    let significance = significance * 10;
+                }
+            }
+            
+            let int_len = int_len + 1;
+            let sin_ptr = sin_ptr + 1;
+        }
+
+        // Construct the resulting value
+        let temp_ptr = str_base;
+
+        if (is_negative) {
+            let temp_ptr = temp_ptr + 1;
+        }
+        
+
+        while (true) {
+            let c = Memory.peek(temp_ptr);
+            
+            if (String.is_digit(c)) {
+                let return_value = return_value + ((c - 48) * significance);
+            } else {
+                if (is_negative) {
+                    return -return_value;
+                }
+
+                return return_value;
+            }
+            
+            let significance = significance / 10;
+            let temp_ptr = temp_ptr + 1;
+        }
+
+        if (is_negative) {
+            return -return_value;
+        }
+
+        return return_value;
     }
 
     /** Sets this string to hold a representation of the given value. */
-    method void setInt(int val) {
-    }
+    method void setInt(int val) { // 12345
+        var int length;
+        var int significance;
+        var int counter;
+        var int temp;
+        var int c;
+        var int temp_val;
+        
+        var bool is_negative;
+        // TODO: Add support for negative numbers
 
+        let length = 0;
+        let significance = 1;
+
+        let is_negative = val < 0;
+
+        // Get the length of the number
+        // significance = 10 ^ length
+        // e.g. 1234, length = 4, significance = 1000
+        /*
+        1st it: length = 1, sign = 10;, after 2nd cond: 1
+        2nd it: length = 2, sign = 100; after 2nd cond: 10
+        3rd it: length = 3, sign = 1000; after 2nd cond: 100
+        4rd it: length = 4, sign = 10000; after 2nd cond: 1000
+        5ft it: length = 5, sign = 10000; after 2nd cond: 10000
+        */
+     
+        let temp_val = val;
+
+        if (is_negative) {
+            let temp_val = -val;
+        }
+
+        while (temp_val > significance) {
+            let length = length + 1;
+            
+            if (~(length = 5)) {
+                let significance = significance * 10;
+            }
+            else {
+                let temp_val = 0;
+            }
+        }
+        
+        let str_len = length;
+
+        if (~(length = 5)) {
+            let significance = significance / 10;
+        }
+        
+        let counter = length;
+        let str_ptr = str_base;
+
+        let temp = val;
+        
+        // - is ascii 45
+        if (is_negative) {
+            let temp = -val;
+            let str_len = str_len + 1;
+            do Memory.poke(str_ptr, 45);
+            let str_ptr = str_ptr + 1;
+        }
+
+        while (~(counter = 0)) {
+            let c = temp / significance;
+
+            let temp = temp - (significance * c);
+
+            do Memory.poke(str_ptr, c + 48);
+            let str_ptr = str_ptr + 1;
+            
+            if (~(significance = 1)) {
+                let significance = significance / 10;
+            }
+
+            let counter = counter - 1;
+        }
+
+        return; 
+    }
     /** Returns the new line character. */
     function char newLine() {
+        return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
+        return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+        return 34;
     }
 }
