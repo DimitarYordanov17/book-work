@@ -8,21 +8,58 @@
  * Note: Jack compilers implement multiplication and division using OS method calls.
  */
 class Math {
+    /* There are possible optimization algorithms
+     * for the multiply, divide and square root function,
+     * and if I find time in the future, I might implement them,
+     * but for now we are using the classical techniques to achieve the results.
+     */
+
 
     /** Initializes the library. */
     function void init() {
+        return;
     }
 
     /** Returns the absolute value of x. */
     function int abs(int x) {
+        if (x < 0) {
+            return -x;
+        }
+        return x;
     }
 
-    /** Returns the product of x and y. 
-     *  When a Jack compiler detects the multiplication operator '*' in the 
-     *  program's code, it handles it by invoking this method. In other words,
-     *  the Jack expressions x*y and multiply(x,y) return the same value.
-     */
+    function bool xor(bool x, bool y) {
+        return ((~(x&y))&(x|y));
+    }
+
+    /* Returns the product of x and y. 
+    *  When a Jack compiler detects the multiplication operator '*' in the 
+    *  program's code, it handles it by invoking this method. In other words,
+    *  the Jack expressions x*y and multiply(x,y) return the same value.
+    */
+
     function int multiply(int x, int y) {
+        var int result, abs_x, abs_y;
+        var bool neg_result;
+
+        let abs_x = Math.abs(x);
+        let abs_y = Math.abs(y);
+
+        let result = 0;
+
+        while (abs_y > 0) {
+            let result = result + abs_x;
+            let abs_y = abs_y - 1;
+        }
+        
+        let neg_result = Math.xor(x > 0, y > 0);
+
+        if (neg_result) {
+            return -result;
+        }
+        else {
+            return result;
+        }
     }
 
     /** Returns the integer part of x/y.
@@ -31,17 +68,67 @@ class Math {
      *  the Jack expressions x/y and divide(x,y) return the same value.
      */
     function int divide(int x, int y) {
+        var int result, abs_x, abs_y;
+        var bool neg_result;
+        
+        let abs_x = Math.abs(x);
+        let abs_y = Math.abs(y);
+        
+        if (abs_x < abs_y) {
+            return 0;
+        }
+
+        let result = 0;
+
+        while (abs_x > 0) {
+            let abs_x = abs_x - abs_y;
+            let result = result + 1;
+        }
+
+        let neg_result = Math.xor(x > 0, y > 0);
+
+        if (neg_result) {
+            return -result;
+        }
+        else {
+            return result;
+        } 
     }
 
     /** Returns the integer part of the square root of x. */
     function int sqrt(int x) {
+        var int counter;
+
+        let counter = 0;
+
+        while (true) {
+            if (Math.multiply(counter, counter) = x) {
+                return counter;
+            }
+
+            let counter = counter + 1;
+        }
+
+        return counter;
     }
 
     /** Returns the greater number. */
     function int max(int a, int b) {
+        if (a > b) {
+            return a;
+        }
+        else {
+            return b;
+        }
     }
 
     /** Returns the smaller number. */
     function int min(int a, int b) {
+        if (a < b) {
+            return a;
+        }
+        else {
+            return b;
+        }
     }
 }
