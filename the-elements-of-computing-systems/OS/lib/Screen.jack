@@ -10,34 +10,179 @@
  * the screen is indexed (0,0).
  */
 class Screen {
+    // 16384 start
+    static Array screen;
+    static Array powers_of_two;
+    static boolean current_color;
+    static boolean white;
+    static boolean black;
 
     /** Initializes the Screen. */
     function void init() {
+        let screen = 16384;
+        let white = 0;
+        let black = 1;
+        
+        let current_color = black;
+
+        let powers_of_two = Array.new(16);
+        let powers_of_two[0] = 1;
+        let powers_of_two[1] = 2;
+        let powers_of_two[2] = 4;
+        let powers_of_two[3] = 8;
+        let powers_of_two[4] = 16;
+        let powers_of_two[5] = 32;
+        let powers_of_two[6] = 64;
+        let powers_of_two[7] = 128;
+        let powers_of_two[8] = 256;
+        let powers_of_two[9] = 512;
+        let powers_of_two[10] = 1024;
+        let powers_of_two[11] = 2048;
+        let powers_of_two[12] = 4096;
+        let powers_of_two[13] = 8192;
+        let powers_of_two[14] = 16384;
+        let powers_of_two[15] = 16384+16384;
+
+
+        return;
     }
 
     /** Erases the entire screen. */
     function void clearScreen() {
+        var int counter;
+        let counter = 0;
+
+        while (counter < 8192) {
+            let screen[counter] = white; // Whiten the screen
+            let counter = counter + 1;
+        }
+
+        return;
     }
 
     /** Sets the current color, to be used for all subsequent drawXXX commands.
      *  Black is represented by true, white by false. */
     function void setColor(boolean b) {
+        let current_color = b;
+        return;
+    }
+
+    function int two_power(int power) {
+        // Not working with bigger power
+        /*
+        var int result;
+
+        let result = 1;
+
+        while (power > 0) {
+            let result = result * 2;
+            let power = power - 1;
+        }
+        */
+
+        return powers_of_two[power];
     }
 
     /** Draws the (x,y) pixel, using the current color. */
     function void drawPixel(int x, int y) {
+        var int row, memory_field, address, mask;
+
+        let row = y * 32;
+        let memory_field = x / 16;
+
+        let address = row + memory_field;
+        let mask = Screen.two_power(x&15);
+
+        if (current_color) { // Black
+            let screen[address] = screen[address] | mask;
+        } else { // White
+            let screen[address] = screen[address] & ~(mask);
+        }
+  
+        return;
     }
 
     /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
     function void drawLine(int x1, int y1, int x2, int y2) {
+        var int current_x, current_y;
+        var int x_dist, y_dist;
+
+        let current_x = x1;
+        let current_y = y1;
+
+        while (~(current_x=x2)|~(current_y=y2)) {
+            do Screen.drawPixel(current_x, current_y);
+
+            let x_dist = (x2 - current_x);
+            let y_dist = (y2 - current_y);
+
+            if (Math.abs(x_dist) > Math.abs(y_dist)) {
+                if (x_dist > 0) {
+                    let current_x = current_x + 1;
+                }
+                else {
+                    if (~(x_dist = 0)) {
+                        let current_x = current_x - 1;
+                    }
+                }
+            } else {
+                if (y_dist > 0) {
+                    let current_y = current_y + 1;
+                }
+                else {
+                    if (~(y_dist=0)) {
+                        let current_y = current_y - 1;
+                    }
+                }
+            }
+        }
+
+        return;
     }
 
     /** Draws a filled rectangle whose top left corner is (x1, y1)
      * and bottom right corner is (x2,y2), using the current color. */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
+        var int line_start_y;
+        var int line_end_y;
+
+        let line_start_y = y1;
+        let line_end_y = y1;
+
+        while (~(line_start_y=y2)) {
+            do Screen.drawLine(x1, line_start_y, x2, line_end_y);
+
+            let line_start_y = line_start_y + 1;
+            let line_end_y = line_end_y + 1;
+        }
+
+        return;
     }
 
     /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
     function void drawCircle(int x, int y, int r) {
+        var int y_axis_start_y, y_axis_end_y;
+        var int x_axis_start_x, x_axis_end_x;
+        let y_axis_start_y = y - r;
+        let y_axis_end_y = y + r;
+
+        let x_axis_start_x = x - 1;
+        let x_axis_end_x = x + 1;
+
+        while (~(y_axis_start_y = y_axis_end_y)) {
+            do Screen.drawLine(x_axis_start_x, y_axis_start_y, x_axis_end_x, y_axis_start_y);
+
+            if (y_axis_start_y < y) {
+                let x_axis_start_x = x_axis_start_x - 1;
+                let x_axis_end_x = x_axis_end_x + 1;
+            } else {
+                let x_axis_start_x = x_axis_start_x + 1;
+                let x_axis_end_x = x_axis_end_x - 1;
+            }
+
+            let y_axis_start_y = y_axis_start_y + 1;
+        }
+
+        return;
     }
 }
