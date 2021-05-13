@@ -1,3 +1,3 @@
 Books exercises
 
-1. The Elements of Computing Systems (Noam Nisan)
+1. The Elements of Computing Systems (Completed)
